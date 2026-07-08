@@ -98,6 +98,18 @@ tbody tr:hover{background:#faf7ff}
 .toast.ok{background:var(--ok)} .toast.erro{background:var(--erro)}
 .vazio{padding:40px;text-align:center;color:var(--cinza)}
 
+/* ---- Modal turma / busca de alunos ---- */
+.modal-corpo{padding:20px 24px;max-height:70vh;overflow:auto}
+.linha-busca{display:flex;justify-content:space-between;align-items:center;gap:10px;padding:8px 10px;border:1px solid var(--linha);border-radius:8px;margin-bottom:6px;font-size:14px}
+
+/* ---- Botões de presença ---- */
+.cel-pres{display:flex;gap:6px}
+.btn-pres{display:inline-block;padding:6px 12px;border:1px solid var(--linha);border-radius:8px;cursor:pointer;font-size:13px;font-weight:600;user-select:none}
+.btn-pres:hover{background:#f3f4f6}
+.pres-presente.sel{background:#dcfce7;border-color:#16a34a;color:#166534}
+.pres-falta.sel{background:#fee2e2;border-color:#dc2626;color:#991b1b}
+.pres-justificado.sel{background:#fef9c3;border-color:#d97706;color:#854d0e}
+
 @media (max-width:720px){
   .app{flex-direction:column}
   .menu{width:100%;flex-direction:row;flex-wrap:wrap;padding:12px}

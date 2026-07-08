@@ -45,8 +45,9 @@ sistema/
 |---|---|
 | Autenticação + instalação | ✅ implementado |
 | Contatos (CRM) + follow-up + dashboard | ✅ implementado |
-| Turmas / matrícula | 🟡 schema pronto, API/telas pendentes |
-| Presença / frequência | 🟡 schema pronto |
+| Importação de não alunos por CSV | ✅ implementado |
+| Turmas / matrícula | ✅ implementado |
+| Presença / frequência | ✅ implementado |
 | Pagamentos / cobrança | 🟡 schema pronto |
 | Eventos / inscrições | 🟡 schema pronto |
 | Scripts de mensagem | 🟡 schema + seed prontos |

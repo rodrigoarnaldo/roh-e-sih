@@ -2,6 +2,17 @@
 
 ## Changelog
 
+### [0.2.0] — 2026-07-08
+
+#### Adicionado
+
+- Módulo **Matrícula + Presença**:
+  - `api/matriculas.php`: vincula contatos às turmas, lista por turma/contato,
+    busca contatos, atualiza status (ativa/pausada/cancelada), impede matrícula
+    duplicada. Tela "Turmas" com cards por turma e modal de gestão de alunos.
+  - `api/presencas.php`: chamada por turma+data (upsert), "marcar todos
+    presentes", e resumo de frequência por aluno. Tela "Presença".
+
 ### [0.1.2] — 2026-07-08
 
 #### Adicionado

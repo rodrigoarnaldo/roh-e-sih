@@ -310,10 +310,11 @@ banco: ok. Também entregue a importação de não alunos por CSV (tela + endpoi
 Repo: github.com/rodrigoarnaldo/roh-e-sih (push via SSH deste ambiente).
 
 Estado atual:
-Sistema NO AR. Login/instalação e módulo Contatos (CRM) + importação CSV
-funcionando. Módulos ainda SEM API/tela (schema pronto): turmas/matrícula,
-presença, pagamentos, eventos/inscrições, scripts de mensagem, indicações,
-avaliações. Deploy é feito por push no GitHub + Deploy manual no EasyPanel.
+Sistema NO AR. Funcionando: login/instalação, Contatos (CRM), importação CSV,
+Matrícula (tela Turmas) e Presença (chamada + frequência). Módulos ainda SEM
+API/tela (schema pronto): pagamentos, eventos/inscrições, scripts de mensagem,
+indicações, avaliações. Deploy é feito por push no GitHub + Deploy manual no
+EasyPanel (lembrar de dar Deploy para publicar cada módulo novo).
 
 Próximo passo recomendado:
 1) `git remote add origin <url>` + `git push -u origin main` (repo já commitado).

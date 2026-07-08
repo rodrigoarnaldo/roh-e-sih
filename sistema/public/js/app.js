@@ -47,6 +47,7 @@ function ligarEventosGlobais() {
     trocarView(a.dataset.view);
   }));
   $$('[data-fechar-modal]').forEach(b => b.addEventListener('click', fecharModal));
+  $$('[data-fechar-turma]').forEach(b => b.addEventListener('click', () => $('#modal-turma').classList.add('oculto')));
   $('#form-contato').addEventListener('submit', aoSalvarContato);
 }
 
@@ -94,6 +95,8 @@ function trocarView(view) {
   if (view === 'dashboard') renderDashboard();
   if (view === 'contatos')  renderContatos();
   if (view === 'importar')  renderImportar();
+  if (view === 'turmas')    renderTurmas();
+  if (view === 'presenca')  renderPresenca();
   if (view === 'followup')  renderFollowup();
 }
 
@@ -337,6 +340,162 @@ function rotulo(chave, valor) {
 }
 function debounce(fn, ms) {
   let t; return (...a) => { clearTimeout(t); t = setTimeout(() => fn(...a), ms); };
+}
+
+// ================= TURMAS + MATRÍCULAS =================
+let turmaAtual = null;
+
+async function renderTurmas() {
+  const alvo = $('#view-turmas');
+  alvo.innerHTML = '<div class="view-topo"><h2>Turmas</h2></div><p class="vazio">Carregando…</p>';
+  const r = await API.get('matriculas.php?acao=turmas_resumo');
+  if (!r.success) { alvo.innerHTML = '<p class="vazio">Erro ao carregar.</p>'; return; }
+  const cards = r.data.map(t => `
+    <div class="card-stat card-turma" data-turma="${t.id}" data-nome="${esc(t.nome)}" style="cursor:pointer">
+      <div class="num">${t.ativos}</div>
+      <div class="rot">${esc(t.nome)} — ${t.ativos} ativo(s)</div>
+    </div>`).join('');
+  alvo.innerHTML = `
+    <div class="view-topo"><h2>Turmas</h2></div>
+    <p class="ajuda">Clique numa turma para ver e gerenciar os alunos matriculados.</p>
+    <div class="grid-cards">${cards}</div>`;
+  $$('.card-turma', alvo).forEach(c => c.addEventListener('click', () => abrirTurma(+c.dataset.turma, c.dataset.nome)));
+}
+
+function abrirTurma(turmaId, nome) {
+  turmaAtual = turmaId;
+  $('#modal-turma-titulo').textContent = 'Turma ' + nome;
+  $('#busca-aluno').value = '';
+  $('#busca-aluno-res').innerHTML = '';
+  $('#modal-turma').classList.remove('oculto');
+  const busca = $('#busca-aluno');
+  busca.oninput = debounce(async () => {
+    const q = busca.value.trim();
+    if (q.length < 2) { $('#busca-aluno-res').innerHTML = ''; return; }
+    const r = await API.get('matriculas.php?acao=buscar_contatos&q=' + encodeURIComponent(q));
+    if (!r.success) return;
+    $('#busca-aluno-res').innerHTML = r.data.length
+      ? r.data.map(c => `
+          <div class="linha-busca">
+            <span>${esc(c.nome)} ${esc(c.sobrenome || '')} · ${esc(c.whatsapp)} <span class="badge tp-${c.tipo_contato}">${rotulo('tipo_contato', c.tipo_contato)}</span></span>
+            <button class="btn btn-primario" data-add="${c.id}">+ Matricular</button>
+          </div>`).join('')
+      : '<p class="ajuda">Nenhum contato encontrado.</p>';
+    $$('#busca-aluno-res [data-add]').forEach(b => b.addEventListener('click', () => matricular(+b.dataset.add)));
+  }, 350);
+  carregarMatriculados();
+}
+
+async function matricular(contatoId) {
+  const r = await API.post('matriculas.php?acao=criar', {
+    contato_id: contatoId, turma_id: turmaAtual, data_matricula: new Date().toISOString().slice(0, 10),
+  });
+  if (r.success) { toast('Aluno matriculado.'); $('#busca-aluno').value = ''; $('#busca-aluno-res').innerHTML = ''; carregarMatriculados(); }
+  else { toast(r.message || 'Erro ao matricular.', 'erro'); }
+}
+
+async function carregarMatriculados() {
+  const alvo = $('#lista-matriculados');
+  alvo.innerHTML = '<p class="ajuda">Carregando…</p>';
+  const r = await API.get('matriculas.php?acao=por_turma&turma_id=' + turmaAtual);
+  if (!r.success) { alvo.innerHTML = '<p class="ajuda">Erro ao carregar.</p>'; return; }
+  if (!r.data.length) { alvo.innerHTML = '<p class="vazio">Nenhum aluno matriculado ainda.</p>'; return; }
+  const opStatus = (sel) => ['ativa', 'pausada', 'cancelada']
+    .map(s => `<option value="${s}" ${s === sel ? 'selected' : ''}>${s}</option>`).join('');
+  alvo.innerHTML = `<div class="tabela-wrap"><table>
+    <thead><tr><th>Aluno</th><th>WhatsApp</th><th>Status</th><th></th></tr></thead>
+    <tbody>${r.data.map(m => `
+      <tr>
+        <td>${esc(m.nome)} ${esc(m.sobrenome || '')}</td>
+        <td>${esc(m.whatsapp)}</td>
+        <td><select data-status="${m.matricula_id}">${opStatus(m.status)}</select></td>
+        <td><button class="btn btn-perigo" data-rem="${m.matricula_id}">Remover</button></td>
+      </tr>`).join('')}</tbody></table></div>`;
+  $$('[data-status]', alvo).forEach(s => s.addEventListener('change', async () => {
+    const r2 = await API.post('matriculas.php?acao=atualizar_status&id=' + s.dataset.status, { status: s.value });
+    toast(r2.success ? 'Status atualizado.' : (r2.message || 'Erro.'), r2.success ? 'ok' : 'erro');
+  }));
+  $$('[data-rem]', alvo).forEach(b => b.addEventListener('click', async () => {
+    if (!confirm('Remover esta matrícula?')) return;
+    const r2 = await API.post('matriculas.php?acao=excluir&id=' + b.dataset.rem, {});
+    if (r2.success) { toast('Matrícula removida.'); carregarMatriculados(); } else { toast(r2.message, 'erro'); }
+  }));
+}
+
+// ================= PRESENÇA / CHAMADA =================
+async function renderPresenca() {
+  const alvo = $('#view-presenca');
+  alvo.innerHTML = `
+    <div class="view-topo"><h2>Presença (chamada)</h2></div>
+    <div class="barra-filtros">
+      <select id="pres-turma"><option value="">Selecione a turma…</option>${
+        (REFS.turmas || []).map(t => `<option value="${t.id}">${esc(t.nome)}</option>`).join('')}</select>
+      <input type="date" id="pres-data" value="${new Date().toISOString().slice(0, 10)}">
+      <button class="btn btn-primario" id="btn-chamada">Carregar chamada</button>
+    </div>
+    <div id="pres-lista"></div>`;
+  $('#btn-chamada').addEventListener('click', carregarChamada);
+}
+
+async function carregarChamada() {
+  const turmaId = $('#pres-turma').value;
+  const data = $('#pres-data').value;
+  const alvo = $('#pres-lista');
+  if (!turmaId) { toast('Selecione a turma.', 'erro'); return; }
+  alvo.innerHTML = '<p class="vazio">Carregando…</p>';
+  const r = await API.get(`presencas.php?acao=chamada&turma_id=${turmaId}&data=${data}`);
+  if (!r.success) { alvo.innerHTML = '<p class="vazio">Erro ao carregar.</p>'; return; }
+  if (!r.data.alunos.length) { alvo.innerHTML = '<p class="vazio">Nenhum aluno ativo nesta turma. Matricule alunos em “Turmas”.</p>'; return; }
+
+  const botoes = (contatoId, atual) => ['presente', 'falta', 'justificado'].map(s => `
+    <label class="btn-pres pres-${s} ${atual === s ? 'sel' : ''}">
+      <input type="radio" name="p${contatoId}" value="${s}" ${atual === s ? 'checked' : ''} hidden>
+      ${s === 'presente' ? 'Presente' : s === 'falta' ? 'Falta' : 'Justif.'}
+    </label>`).join('');
+
+  alvo.innerHTML = `
+    <div class="tabela-wrap"><table>
+      <thead><tr><th>Aluno</th><th>Presença</th></tr></thead>
+      <tbody>${r.data.alunos.map(a => `
+        <tr data-contato="${a.contato_id}">
+          <td>${esc(a.nome)} ${esc(a.sobrenome || '')}</td>
+          <td class="cel-pres">${botoes(a.contato_id, a.status)}</td>
+        </tr>`).join('')}</tbody>
+    </table></div>
+    <div style="margin-top:14px;display:flex;gap:10px;align-items:center">
+      <button class="btn" id="btn-todos-presentes">Marcar todos presentes</button>
+      <button class="btn btn-primario" id="btn-salvar-chamada">Salvar chamada</button>
+      <span id="pres-msg" class="msg"></span>
+    </div>`;
+
+  $$('.btn-pres', alvo).forEach(l => l.addEventListener('click', () => {
+    setTimeout(() => {
+      l.parentElement.querySelectorAll('.btn-pres').forEach(x => x.classList.remove('sel'));
+      l.classList.add('sel');
+    }, 0);
+  }));
+  $('#btn-todos-presentes').addEventListener('click', () => {
+    $$('#pres-lista tbody tr').forEach(tr => {
+      const rb = tr.querySelector('input[value=presente]');
+      rb.checked = true;
+      tr.querySelectorAll('.btn-pres').forEach(x => x.classList.remove('sel'));
+      tr.querySelector('.pres-presente').classList.add('sel');
+    });
+  });
+  $('#btn-salvar-chamada').addEventListener('click', () => salvarChamada(turmaId, data));
+}
+
+async function salvarChamada(turmaId, data) {
+  const presencas = [];
+  $$('#pres-lista tbody tr').forEach(tr => {
+    const sel = tr.querySelector('input[type=radio]:checked');
+    if (sel) presencas.push({ contato_id: +tr.dataset.contato, status: sel.value });
+  });
+  if (!presencas.length) { toast('Marque ao menos um aluno.', 'erro'); return; }
+  const r = await API.post('presencas.php?acao=salvar', { turma_id: +turmaId, data, presencas });
+  const msg = $('#pres-msg');
+  if (r.success) { msg.className = 'msg ok'; msg.textContent = r.message; toast(r.message); }
+  else { msg.className = 'msg erro'; msg.textContent = r.message; }
 }
 
 // ================= IMPORTAÇÃO DE CSV (não alunos) =================

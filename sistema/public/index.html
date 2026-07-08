@@ -42,6 +42,8 @@
         <a href="#" class="nav-item ativo" data-view="dashboard">📊 Painel</a>
         <a href="#" class="nav-item" data-view="contatos">👥 Contatos</a>
         <a href="#" class="nav-item" data-view="importar">📥 Importar</a>
+        <a href="#" class="nav-item" data-view="turmas">🗓️ Turmas</a>
+        <a href="#" class="nav-item" data-view="presenca">✅ Presença</a>
         <a href="#" class="nav-item" data-view="followup">🔔 Follow-up</a>
       </nav>
       <div class="menu-rodape">
@@ -54,6 +56,8 @@
       <div id="view-dashboard" class="view"></div>
       <div id="view-contatos" class="view oculto"></div>
       <div id="view-importar" class="view oculto"></div>
+      <div id="view-turmas" class="view oculto"></div>
+      <div id="view-presenca" class="view oculto"></div>
       <div id="view-followup" class="view oculto"></div>
     </main>
   </div>
@@ -72,6 +76,28 @@
           <button type="button" class="btn" data-fechar-modal>Cancelar</button>
           <button type="submit" form="form-contato" class="btn btn-primario">Salvar</button>
         </div>
+      </footer>
+    </div>
+  </div>
+
+  <!-- ===================== MODAL TURMA (matrículas) ===================== -->
+  <div id="modal-turma" class="modal oculto">
+    <div class="modal-caixa">
+      <header class="modal-topo">
+        <h2 id="modal-turma-titulo">Turma</h2>
+        <button class="btn-fechar" data-fechar-turma>&times;</button>
+      </header>
+      <div class="modal-corpo">
+        <div class="barra-filtros">
+          <input type="search" id="busca-aluno" placeholder="Buscar contato para matricular…">
+        </div>
+        <div id="busca-aluno-res"></div>
+        <h3 style="margin:16px 0 6px;font-size:15px">Matriculados</h3>
+        <div id="lista-matriculados"></div>
+      </div>
+      <footer class="modal-rodape">
+        <p class="ajuda" style="margin:0">Alunos ativos participam da chamada dessa turma.</p>
+        <button type="button" class="btn" data-fechar-turma>Fechar</button>
       </footer>
     </div>
   </div>
