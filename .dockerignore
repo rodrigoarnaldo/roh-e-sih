@@ -1,0 +1,15 @@
+# A imagem só precisa da aplicação (sistema/) + arquivos de deploy.
+.git
+.gitignore
+docker-compose.yml
+# Biblioteca IA Dev (não entra na imagem)
+prompts/
+protocols/
+skills/
+speciality/
+docs/
+*.md
+!sistema/README.md
+# Dados locais
+sistema/.env
+sistema/storage/videos/*

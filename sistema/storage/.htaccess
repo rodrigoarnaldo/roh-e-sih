@@ -1,0 +1,3 @@
+# Arquivos (vídeos de prova) não são servidos diretamente.
+# O download deve passar por um endpoint PHP com verificação de sessão.
+Require all denied

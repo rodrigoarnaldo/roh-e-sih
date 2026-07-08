@@ -1,0 +1,2 @@
+# Bloqueia acesso web direto à pasta de configuração (credenciais).
+Require all denied

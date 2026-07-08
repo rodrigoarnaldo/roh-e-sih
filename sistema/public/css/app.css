@@ -1,0 +1,106 @@
+/* ===== Roh & Sih — estilo do painel ===== */
+:root{
+  --roxo:#6c2bd9; --roxo-esc:#4c1d95; --rosa:#db2777;
+  --tinta:#1f2937; --cinza:#6b7280; --linha:#e5e7eb;
+  --fundo:#f5f4f8; --card:#ffffff; --ok:#16a34a; --erro:#dc2626; --aviso:#d97706;
+  --raio:12px; --sombra:0 1px 3px rgba(0,0,0,.08),0 4px 16px rgba(0,0,0,.04);
+}
+*{box-sizing:border-box}
+body{margin:0;font-family:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;color:var(--tinta);background:var(--fundo)}
+.oculto{display:none !important}
+a{color:var(--roxo);text-decoration:none}
+
+/* ---- Auth ---- */
+.tela-auth{min-height:100vh;display:flex;align-items:center;justify-content:center;
+  background:linear-gradient(135deg,var(--roxo-esc),var(--rosa))}
+.card-auth{background:var(--card);padding:36px 32px;border-radius:16px;width:min(380px,92vw);box-shadow:var(--sombra);text-align:center}
+.marca{font-size:32px;margin:0;color:var(--roxo-esc)}
+.marca span{color:var(--rosa)}
+.subtitulo{color:var(--cinza);margin:.2rem 0 1.4rem;font-size:14px}
+.form-auth h2{margin:0 0 1rem;font-size:18px}
+.form-auth label,.form-contato label{display:block;text-align:left;font-size:13px;color:var(--cinza);margin-bottom:12px}
+.form-auth input,.form-contato input,.form-contato select,.form-contato textarea{
+  width:100%;margin-top:4px;padding:10px 12px;border:1px solid var(--linha);border-radius:8px;font-size:14px;background:#fff}
+input:focus,select:focus,textarea:focus{outline:2px solid var(--roxo);border-color:var(--roxo)}
+.ajuda{font-size:13px;color:var(--cinza);margin:-.4rem 0 1rem}
+
+/* ---- Botões ---- */
+.btn{padding:10px 16px;border:1px solid var(--linha);background:#fff;border-radius:8px;cursor:pointer;font-size:14px;font-weight:600;color:var(--tinta)}
+.btn:hover{background:#f3f4f6}
+.btn-primario{background:var(--roxo);border-color:var(--roxo);color:#fff}
+.btn-primario:hover{background:var(--roxo-esc)}
+.btn-link{background:none;border:none;color:var(--cinza);cursor:pointer;font-size:13px;text-decoration:underline}
+.btn-perigo{color:var(--erro);border-color:#fca5a5}
+
+/* ---- App layout ---- */
+.app{display:flex;min-height:100vh}
+.menu{width:230px;background:var(--roxo-esc);color:#fff;display:flex;flex-direction:column;padding:20px 0}
+.marca-menu{font-size:22px;text-align:center;margin:0 0 24px}
+.marca-menu span{color:var(--rosa)}
+.menu nav{flex:1;display:flex;flex-direction:column;gap:2px}
+.nav-item{color:#e9d5ff;padding:12px 22px;font-size:15px}
+.nav-item:hover{background:rgba(255,255,255,.08)}
+.nav-item.ativo{background:rgba(255,255,255,.15);color:#fff;font-weight:600;border-left:3px solid var(--rosa)}
+.menu-rodape{padding:16px 22px;border-top:1px solid rgba(255,255,255,.12);font-size:13px;color:#e9d5ff;display:flex;flex-direction:column;gap:6px}
+.conteudo{flex:1;padding:28px 32px;overflow:auto}
+
+/* ---- Cabeçalho de view ---- */
+.view-topo{display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;gap:12px;flex-wrap:wrap}
+.view-topo h2{margin:0;font-size:22px}
+
+/* ---- Cards de resumo ---- */
+.grid-cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:16px;margin-bottom:24px}
+.card-stat{background:var(--card);border-radius:var(--raio);padding:18px 20px;box-shadow:var(--sombra)}
+.card-stat .num{font-size:30px;font-weight:700;color:var(--roxo-esc)}
+.card-stat .rot{font-size:13px;color:var(--cinza);margin-top:4px}
+.card-stat.destaque .num{color:var(--rosa)}
+
+/* ---- Tabela ---- */
+.barra-filtros{display:flex;gap:10px;margin-bottom:16px;flex-wrap:wrap}
+.barra-filtros input,.barra-filtros select{padding:9px 12px;border:1px solid var(--linha);border-radius:8px;font-size:14px}
+.tabela-wrap{background:var(--card);border-radius:var(--raio);box-shadow:var(--sombra);overflow-x:auto}
+table{width:100%;border-collapse:collapse;font-size:14px}
+th,td{text-align:left;padding:12px 14px;border-bottom:1px solid var(--linha);white-space:nowrap}
+th{background:#faf9fc;color:var(--cinza);font-size:12px;text-transform:uppercase;letter-spacing:.03em}
+tbody tr:hover{background:#faf7ff}
+.acoes-linha{display:flex;gap:6px}
+.paginacao{display:flex;justify-content:space-between;align-items:center;padding:12px;color:var(--cinza);font-size:13px}
+
+/* ---- Badges ---- */
+.badge{display:inline-block;padding:3px 9px;border-radius:999px;font-size:12px;font-weight:600}
+.tp-aluno{background:#dcfce7;color:#166534}
+.tp-ex_aluno{background:#fef9c3;color:#854d0e}
+.tp-nao_aluno{background:#e0e7ff;color:#3730a3}
+.tp-nao_contatar{background:#fee2e2;color:#991b1b}
+.venc{color:var(--erro);font-weight:600}
+
+/* ---- Modal ---- */
+.modal{position:fixed;inset:0;background:rgba(17,24,39,.55);display:flex;align-items:flex-start;justify-content:center;padding:24px;overflow:auto;z-index:50}
+.modal-caixa{background:var(--card);border-radius:16px;width:min(760px,100%);box-shadow:var(--sombra)}
+.modal-topo{display:flex;justify-content:space-between;align-items:center;padding:18px 24px;border-bottom:1px solid var(--linha)}
+.modal-topo h2{margin:0;font-size:19px}
+.btn-fechar{background:none;border:none;font-size:26px;line-height:1;cursor:pointer;color:var(--cinza)}
+.form-contato{padding:20px 24px;display:grid;grid-template-columns:1fr 1fr;gap:0 18px}
+.form-contato .full{grid-column:1/-1}
+.form-contato fieldset{grid-column:1/-1;border:1px solid var(--linha);border-radius:10px;padding:12px 16px;margin:6px 0 14px}
+.form-contato legend{font-size:13px;font-weight:600;color:var(--roxo);padding:0 6px}
+.checks{display:flex;flex-wrap:wrap;gap:12px}
+.checks label{display:flex;align-items:center;gap:6px;color:var(--tinta);margin:0}
+.checks input{width:auto;margin:0}
+.modal-rodape{display:flex;justify-content:space-between;align-items:center;gap:12px;padding:16px 24px;border-top:1px solid var(--linha)}
+.modal-rodape > div{display:flex;gap:10px}
+
+/* ---- Mensagens / toast ---- */
+.msg{font-size:13px;margin:.6rem 0 0;min-height:1em}
+.msg.erro{color:var(--erro)}
+.msg.ok{color:var(--ok)}
+.toast{position:fixed;bottom:24px;right:24px;background:var(--tinta);color:#fff;padding:14px 20px;border-radius:10px;box-shadow:var(--sombra);z-index:60;font-size:14px}
+.toast.ok{background:var(--ok)} .toast.erro{background:var(--erro)}
+.vazio{padding:40px;text-align:center;color:var(--cinza)}
+
+@media (max-width:720px){
+  .app{flex-direction:column}
+  .menu{width:100%;flex-direction:row;flex-wrap:wrap;padding:12px}
+  .menu nav{flex-direction:row;flex-wrap:wrap}
+  .form-contato{grid-template-columns:1fr}
+}

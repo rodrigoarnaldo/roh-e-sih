@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Roh &amp; Sih — CRM &amp; Secretaria</title>
+  <link rel="stylesheet" href="css/app.css">
+</head>
+<body>
+
+  <!-- ===================== LOGIN / INSTALAÇÃO ===================== -->
+  <section id="tela-auth" class="tela-auth oculto">
+    <div class="card-auth">
+      <h1 class="marca">Roh <span>&amp;</span> Sih</h1>
+      <p class="subtitulo">CRM &amp; Secretaria — Dança de Salão</p>
+
+      <form id="form-login" class="form-auth oculto">
+        <h2>Entrar</h2>
+        <label>E-mail<input type="email" name="email" required autocomplete="username"></label>
+        <label>Senha<input type="password" name="senha" required autocomplete="current-password"></label>
+        <button type="submit" class="btn btn-primario">Entrar</button>
+      </form>
+
+      <form id="form-instalar" class="form-auth oculto">
+        <h2>Criar administrador</h2>
+        <p class="ajuda">Nenhum usuário encontrado. Crie o primeiro acesso.</p>
+        <label>Nome<input type="text" name="nome" required></label>
+        <label>E-mail<input type="email" name="email" required></label>
+        <label>Senha (mín. 6)<input type="password" name="senha" required minlength="6"></label>
+        <button type="submit" class="btn btn-primario">Criar e continuar</button>
+      </form>
+
+      <p id="auth-msg" class="msg"></p>
+    </div>
+  </section>
+
+  <!-- ===================== APP ===================== -->
+  <div id="app" class="app oculto">
+    <aside class="menu">
+      <h1 class="marca-menu">Roh <span>&amp;</span> Sih</h1>
+      <nav>
+        <a href="#" class="nav-item ativo" data-view="dashboard">📊 Painel</a>
+        <a href="#" class="nav-item" data-view="contatos">👥 Contatos</a>
+        <a href="#" class="nav-item" data-view="followup">🔔 Follow-up</a>
+      </nav>
+      <div class="menu-rodape">
+        <span id="usuario-nome"></span>
+        <button id="btn-sair" class="btn-link">Sair</button>
+      </div>
+    </aside>
+
+    <main class="conteudo">
+      <div id="view-dashboard" class="view"></div>
+      <div id="view-contatos" class="view oculto"></div>
+      <div id="view-followup" class="view oculto"></div>
+    </main>
+  </div>
+
+  <!-- ===================== MODAL CONTATO ===================== -->
+  <div id="modal-contato" class="modal oculto">
+    <div class="modal-caixa">
+      <header class="modal-topo">
+        <h2 id="modal-titulo">Novo contato</h2>
+        <button class="btn-fechar" data-fechar-modal>&times;</button>
+      </header>
+      <form id="form-contato" class="form-contato"></form>
+      <footer class="modal-rodape">
+        <p id="form-contato-msg" class="msg"></p>
+        <div>
+          <button type="button" class="btn" data-fechar-modal>Cancelar</button>
+          <button type="submit" form="form-contato" class="btn btn-primario">Salvar</button>
+        </div>
+      </footer>
+    </div>
+  </div>
+
+  <div id="toast" class="toast oculto"></div>
+
+  <script src="js/api.js"></script>
+  <script src="js/app.js"></script>
+</body>
+</html>

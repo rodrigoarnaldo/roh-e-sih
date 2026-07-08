@@ -1,0 +1,16 @@
+# Segredos e dados — nunca versionar
+sistema/.env
+.env
+*.log
+
+# Uploads (vídeos de prova) ficam em volume, não no Git
+sistema/storage/videos/*
+!sistema/storage/videos/.gitkeep
+
+# Backups / dumps locais
+*.sql.gz
+*.dump
+*.backup
+
+# Configuração local do Claude Code (não é do projeto)
+.claude/settings.local.json
