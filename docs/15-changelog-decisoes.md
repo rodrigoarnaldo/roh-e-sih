@@ -2,6 +2,15 @@
 
 ## Changelog
 
+### [0.3.1] — 2026-07-08
+
+#### Adicionado
+
+- Importação de contatos ganhou colunas **opcionais**: Par (com/sem), Papel
+  (líder/seguidora), Estilo de interesse (vários por célula), Disponibilidade
+  (vários) e Data do contato (aceita DD/MM/AAAA). Normalizadores no backend;
+  estilos/disponibilidade gravam nas tabelas N:N. Modelo CSV atualizado.
+
 ### [0.3.0] — 2026-07-08
 
 #### Adicionado

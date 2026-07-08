@@ -702,6 +702,11 @@ const CAMPOS_IMPORT = [
   { chave: 'uf',        rotulo: 'UF',        obrig: false, dicas: ['uf', 'estado', 'state'] },
   { chave: 'cpf',       rotulo: 'CPF',       obrig: false, dicas: ['cpf', 'documento'] },
   { chave: 'origem',    rotulo: 'Origem',    obrig: false, dicas: ['origem', 'fonte', 'source'] },
+  { chave: 'par',       rotulo: 'Par',       obrig: false, dicas: ['par', 'parceiro', 'dupla'] },
+  { chave: 'papel',     rotulo: 'Papel',     obrig: false, dicas: ['papel', 'funcao', 'lider', 'seguidora', 'conduc'] },
+  { chave: 'estilos',   rotulo: 'Estilo de interesse', obrig: false, dicas: ['estilo', 'interesse', 'ritmo', 'danca', 'modalidade'] },
+  { chave: 'disponibilidade', rotulo: 'Disponibilidade', obrig: false, dicas: ['disponib', 'dias', 'disponivel'] },
+  { chave: 'data_contato', rotulo: 'Data do contato', obrig: false, dicas: ['data contato', 'data do contato', 'primeiro contato', 'entrada', 'cadastro'] },
 ];
 let CSV = { cabecalho: [], linhas: [] };
 
@@ -837,12 +842,14 @@ function renderPrevia() {
     const t = normalizarTipoJS(o.tipo) || tipoPadrao;
     return `<tr><td>${esc(o.nome)}</td><td>${esc(o.sobrenome)}</td><td>${esc(o.whatsapp)}</td>
       <td><span class="badge tp-${t}">${rotulo('tipo_contato', t)}</span></td>
-      <td>${esc(o.cidade)}</td><td>${esc(o.uf)}</td><td>${esc(o.origem)}</td></tr>`;
+      <td>${esc(o.cidade)}</td><td>${esc(o.uf)}</td><td>${esc(o.origem)}</td>
+      <td>${esc(o.par)}</td><td>${esc(o.papel)}</td><td>${esc(o.estilos)}</td>
+      <td>${esc(o.disponibilidade)}</td><td>${esc(o.data_contato)}</td></tr>`;
   }).join('');
   $('#imp-previa').innerHTML = `
-    <p class="ajuda" style="margin-top:14px">Prévia das 5 primeiras linhas (confira o Tipo interpretado):</p>
+    <p class="ajuda" style="margin-top:14px">Prévia das 5 primeiras linhas (confira o Tipo interpretado). Estilos e Disponibilidade aceitam vários valores na mesma célula (ex.: "forró, samba"):</p>
     <div class="tabela-wrap"><table>
-      <thead><tr><th>Nome</th><th>Sobrenome</th><th>WhatsApp</th><th>Tipo</th><th>Cidade</th><th>UF</th><th>Origem</th></tr></thead>
+      <thead><tr><th>Nome</th><th>Sobrenome</th><th>WhatsApp</th><th>Tipo</th><th>Cidade</th><th>UF</th><th>Origem</th><th>Par</th><th>Papel</th><th>Estilos</th><th>Disp.</th><th>Data contato</th></tr></thead>
       <tbody>${linhas}</tbody></table></div>`;
 }
 

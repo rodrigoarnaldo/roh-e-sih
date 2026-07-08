@@ -1,5 +1,5 @@
-nome;sobrenome;whatsapp;tipo;cidade;uf;cpf;origem
-Maria;Silva;5551999990001;Aluno;Porto Alegre;RS;;Indicação
-João;Souza;5551999990002;Não aluno;Canoas;RS;;Instagram
-Ana;Oliveira;5551999990003;Ex-aluno;Gravataí;RS;;Evento
-Carlos;Pereira;5551999990004;Não contatar;Porto Alegre;RS;;Lista antiga
+nome;sobrenome;whatsapp;tipo;cidade;uf;cpf;origem;par;papel;estilo_interesse;disponibilidade;data_contato
+Maria;Silva;5551999990001;Aluno;Porto Alegre;RS;;Indicação;com par;seguidora;forró, samba;segunda, quarta;10/06/2026
+João;Souza;5551999990002;Não aluno;Canoas;RS;;Instagram;sem par;líder;vaneira;terça;15/06/2026
+Ana;Oliveira;5551999990003;Ex-aluno;Gravataí;RS;;Evento;com par;seguidora;sertanejo, samba;quinta;20/05/2026
+Carlos;Pereira;5551999990004;Não contatar;Porto Alegre;RS;;Lista antiga;sem par;líder;forró;segunda, terça, quarta;01/04/2026
