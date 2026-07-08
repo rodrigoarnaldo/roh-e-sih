@@ -531,6 +531,7 @@ function renderImportar() {
     <div class="view-topo"><h2>Importar contatos (CSV)</h2></div>
     <div class="tabela-wrap" style="padding:20px">
       <p class="ajuda">Selecione um arquivo <strong>.csv</strong> com uma linha de cabeçalho. O <strong>tipo</strong> de cada contato pode vir de uma coluna do arquivo; quando faltar, usa o tipo padrão que você escolher. Duplicados (mesmo WhatsApp) são ignorados.</p>
+      <p style="margin:0 0 12px"><a href="modelo-importacao-contatos.csv" download>⬇️ Baixar modelo CSV</a> — preencha com seus dados e envie aqui.</p>
       <input type="file" id="arquivo-csv" accept=".csv,text/csv">
       <div id="importar-passo2"></div>
     </div>`;
