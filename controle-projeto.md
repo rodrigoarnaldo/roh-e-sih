@@ -94,10 +94,10 @@ Skills principais: skill-arquitetura, skill-dados, skill-mysql, skill-backend, s
 | QA/testes | pendente | sem runtime PHP no ambiente de dev da IA |
 | Documentação | feito | docs 01,02,08,09,15 + sistema/README |
 | Git/GitHub | feito | pushado em github.com/rodrigoarnaldo/roh-e-sih (branch main) via SSH |
-| Docker/EasyPanel | em andamento | Dockerfile + apache.conf + compose prontos; falta criar serviços no painel |
-| Homologação | pendente |  |
-| Produção | pendente |  |
-| Monitoramento | pendente |  |
+| Docker/EasyPanel | feito | serviços MySQL + App criados; deploy ok; health.php respondendo |
+| Homologação | pendente | validação direto em produção por enquanto |
+| Produção | em andamento | app no ar via EasyPanel, banco conectado e schema importado |
+| Monitoramento | pendente | falta backup automático, rollback e alertas |
 
 Status sugeridos:
 
@@ -303,17 +303,17 @@ Use esta seção para outra IA ou programador continuar exatamente de onde parou
 
 ```txt
 Última coisa feita:
-Iniciado o projeto real "Roh & Sih — CRM & Secretaria" usando a biblioteca.
-Entregue a FATIA 1: schema completo de banco (todos os módulos), autenticação
-por sessão + instalação do 1º admin, e o módulo Contatos (CRM) end-to-end
-(API PHP + frontend Fetch). Código em sistema/. Docs 01,02,08,09,15 atualizadas.
+Deploy em PRODUÇÃO no EasyPanel concluído: serviços MySQL (roh-e-sih-db) e App
+(roh-e-sih-app) criados, DB_HOST corrigido para o host interno
+"roh-e-sih_roh-e-sih-db", schema+seed importados e health.php respondendo
+banco: ok. Também entregue a importação de não alunos por CSV (tela + endpoint).
+Repo: github.com/rodrigoarnaldo/roh-e-sih (push via SSH deste ambiente).
 
 Estado atual:
-Sistema roda com docroot apontando para sistema/. Falta ambiente PHP/MySQL para
-testar em runtime (não disponível no ambiente da IA) — validação foi por
-revisão de código. Módulos com schema pronto mas SEM API/tela: turmas/matrícula,
+Sistema NO AR. Login/instalação e módulo Contatos (CRM) + importação CSV
+funcionando. Módulos ainda SEM API/tela (schema pronto): turmas/matrícula,
 presença, pagamentos, eventos/inscrições, scripts de mensagem, indicações,
-avaliações.
+avaliações. Deploy é feito por push no GitHub + Deploy manual no EasyPanel.
 
 Próximo passo recomendado:
 1) `git remote add origin <url>` + `git push -u origin main` (repo já commitado).
