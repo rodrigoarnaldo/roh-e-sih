@@ -93,7 +93,7 @@ Skills principais: skill-arquitetura, skill-dados, skill-mysql, skill-backend, s
 | Segurança/auditoria | em andamento | sessão, PDO, hash, logs; falta CSRF/rate-limit |
 | QA/testes | pendente | sem runtime PHP no ambiente de dev da IA |
 | Documentação | feito | docs 01,02,08,09,15 + sistema/README |
-| Git/GitHub | em andamento | repo iniciado (branch main, 1º commit); falta `git remote add` + push |
+| Git/GitHub | feito | pushado em github.com/rodrigoarnaldo/roh-e-sih (branch main) via SSH |
 | Docker/EasyPanel | em andamento | Dockerfile + apache.conf + compose prontos; falta criar serviços no painel |
 | Homologação | pendente |  |
 | Produção | pendente |  |
