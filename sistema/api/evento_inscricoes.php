@@ -45,7 +45,7 @@ function buscarContatos() {
     $stmt = db()->prepare(
         "SELECT id, nome, sobrenome, whatsapp, tipo_contato
          FROM contatos
-         WHERE nome LIKE :q OR sobrenome LIKE :q OR whatsapp LIKE :q
+         WHERE CONCAT_WS(' ', nome, sobrenome, whatsapp) LIKE :q
          ORDER BY nome LIMIT 15"
     );
     $stmt->execute([':q' => '%' . $q . '%']);

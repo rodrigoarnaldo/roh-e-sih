@@ -2,6 +2,15 @@
 
 ## Changelog
 
+### [0.3.2] — 2026-07-08
+
+#### Corrigido
+
+- **Busca quebrada** em Contatos, Turmas e Eventos: as queries reusavam o mesmo
+  placeholder `:q` em vários `LIKE`, o que falha com prepared statements nativos
+  (`EMULATE_PREPARES=false`, erro HY093). Trocado por `CONCAT_WS(' ', ...) LIKE :q`
+  (um único placeholder; ainda busca nome+sobrenome juntos).
+
 ### [0.3.1] — 2026-07-08
 
 #### Adicionado

@@ -49,7 +49,8 @@ function listar() {
     $where = [];
     $bind  = [];
     if ($q !== null) {
-        $where[] = '(c.nome LIKE :q OR c.sobrenome LIKE :q OR c.whatsapp LIKE :q OR c.cidade LIKE :q)';
+        // CONCAT_WS usa um único placeholder (prepared nativo não reusa :q)
+        $where[] = "CONCAT_WS(' ', c.nome, c.sobrenome, c.whatsapp, c.cidade) LIKE :q";
         $bind[':q'] = '%' . $q . '%';
     }
     if ($tipo !== null && in_array($tipo, ENUM_TIPO, true)) {
