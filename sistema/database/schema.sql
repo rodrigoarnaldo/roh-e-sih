@@ -187,7 +187,8 @@ CREATE TABLE IF NOT EXISTS evento_inscricoes (
   id            INT UNSIGNED NOT NULL AUTO_INCREMENT,
   evento_id     INT UNSIGNED NOT NULL,
   contato_id    INT UNSIGNED NOT NULL,
-  status        ENUM('negociando','reservado','inscrito','cancelado') NOT NULL DEFAULT 'negociando',
+  status        ENUM('negociando','reservado','pago','cancelado','sem_interesse') NOT NULL DEFAULT 'negociando',
+  data_followup DATE NULL,                 -- próximo retorno da negociação
   valor         DECIMAL(10,2) NULL,
   observacao    VARCHAR(255) NULL,
   criado_em     DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,

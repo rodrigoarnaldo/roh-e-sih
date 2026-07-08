@@ -58,6 +58,15 @@ Base: `sistema/api/`. Todos usam o envelope oficial. `meta` carrega paginação.
 | GET  | `presencas.php?acao=chamada&turma_id=&data=` | Alunos ativos + presença lançada na data | sim | não |
 | POST | `presencas.php?acao=salvar` | Salva chamada em lote (upsert por aluno/turma/data) | sim | sim |
 | GET  | `presencas.php?acao=frequencia&contato_id=` | Resumo de frequência do aluno | sim | não |
+| GET  | `eventos.php?acao=listar` | Eventos + contadores (pagos, em negociação) | sim | não |
+| GET  | `eventos.php?acao=obter&id=` | Um evento | sim | não |
+| POST | `eventos.php?acao=criar` / `atualizar&id=` / `excluir&id=` | CRUD de evento | sim | sim |
+| GET  | `evento_inscricoes.php?acao=por_evento&evento_id=` | Interessados do evento | sim | não |
+| GET  | `evento_inscricoes.php?acao=buscar_contatos&q=` | Busca contatos para inscrever | sim | não |
+| GET  | `evento_inscricoes.php?acao=followup` | Negociações abertas (negociando/reservado) | sim | não |
+| POST | `evento_inscricoes.php?acao=criar` | Adiciona interessado | sim | sim |
+| POST | `evento_inscricoes.php?acao=atualizar&id=` | Muda situação/valor/follow-up | sim | sim |
+| POST | `evento_inscricoes.php?acao=excluir&id=` | Remove interessado | sim | sim |
 
 ## Validações críticas (backend)
 

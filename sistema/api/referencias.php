@@ -63,5 +63,18 @@ sucesso([
         ['valor' => 'quarta', 'rotulo' => 'Quarta'],
         ['valor' => 'quinta', 'rotulo' => 'Quinta'],
     ],
+    'evento_tipo' => [
+        ['valor' => 'curso_intensivo', 'rotulo' => 'Curso intensivo'],
+        ['valor' => 'baile', 'rotulo' => 'Baile / festa'],
+        ['valor' => 'workshop', 'rotulo' => 'Workshop'],
+        ['valor' => 'turma_regular', 'rotulo' => 'Turma regular'],
+    ],
+    'inscricao_status' => [
+        ['valor' => 'negociando', 'rotulo' => 'Negociando'],
+        ['valor' => 'reservado', 'rotulo' => 'Reservado'],
+        ['valor' => 'pago', 'rotulo' => 'Pago'],
+        ['valor' => 'cancelado', 'rotulo' => 'Cancelado'],
+        ['valor' => 'sem_interesse', 'rotulo' => 'Não tenho mais interesse'],
+    ],
     'turmas' => $turmas,
 ]);

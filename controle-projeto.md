@@ -311,10 +311,14 @@ Repo: github.com/rodrigoarnaldo/roh-e-sih (push via SSH deste ambiente).
 
 Estado atual:
 Sistema NO AR. Funcionando: login/instalação, Contatos (CRM), importação CSV,
-Matrícula (tela Turmas) e Presença (chamada + frequência). Módulos ainda SEM
-API/tela (schema pronto): pagamentos, eventos/inscrições, scripts de mensagem,
-indicações, avaliações. Deploy é feito por push no GitHub + Deploy manual no
-EasyPanel (lembrar de dar Deploy para publicar cada módulo novo).
+Matrícula (Turmas), Presença (chamada + frequência) e Eventos (inscrições +
+follow-up). Módulos ainda SEM API/tela (schema pronto): pagamentos, scripts de
+mensagem, indicações, avaliações.
+
+ATENÇÃO: o módulo Eventos exige rodar a migration
+database/migrations/001_eventos_inscricoes_status.sql no banco de produção
+(altera enum de evento_inscricoes.status e adiciona data_followup) ANTES de usar
+a tela de interessados. Deploy é por push no GitHub + Deploy manual no EasyPanel.
 
 Próximo passo recomendado:
 1) `git remote add origin <url>` + `git push -u origin main` (repo já commitado).

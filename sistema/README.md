@@ -48,8 +48,8 @@ sistema/
 | Importação de contatos por CSV (tipo por coluna) | ✅ implementado |
 | Turmas / matrícula | ✅ implementado |
 | Presença / frequência | ✅ implementado |
+| Eventos / inscrições + follow-up | ✅ implementado |
 | Pagamentos / cobrança | 🟡 schema pronto |
-| Eventos / inscrições | 🟡 schema pronto |
 | Scripts de mensagem | 🟡 schema + seed prontos |
 | Indicações premiadas | 🟡 schema pronto |
 | Avaliações + vídeo da prova | 🟡 schema pronto |

@@ -44,6 +44,7 @@
         <a href="#" class="nav-item" data-view="importar">📥 Importar</a>
         <a href="#" class="nav-item" data-view="turmas">🗓️ Turmas</a>
         <a href="#" class="nav-item" data-view="presenca">✅ Presença</a>
+        <a href="#" class="nav-item" data-view="eventos">🎉 Eventos</a>
         <a href="#" class="nav-item" data-view="followup">🔔 Follow-up</a>
       </nav>
       <div class="menu-rodape">
@@ -58,6 +59,7 @@
       <div id="view-importar" class="view oculto"></div>
       <div id="view-turmas" class="view oculto"></div>
       <div id="view-presenca" class="view oculto"></div>
+      <div id="view-eventos" class="view oculto"></div>
       <div id="view-followup" class="view oculto"></div>
     </main>
   </div>
@@ -98,6 +100,46 @@
       <footer class="modal-rodape">
         <p class="ajuda" style="margin:0">Alunos ativos participam da chamada dessa turma.</p>
         <button type="button" class="btn" data-fechar-turma>Fechar</button>
+      </footer>
+    </div>
+  </div>
+
+  <!-- ===================== MODAL EVENTO ===================== -->
+  <div id="modal-evento" class="modal oculto">
+    <div class="modal-caixa">
+      <header class="modal-topo">
+        <h2 id="modal-evento-titulo">Novo evento</h2>
+        <button class="btn-fechar" data-fechar-evento>&times;</button>
+      </header>
+      <form id="form-evento" class="form-contato"></form>
+      <footer class="modal-rodape">
+        <p id="form-evento-msg" class="msg"></p>
+        <div>
+          <button type="button" class="btn" data-fechar-evento>Cancelar</button>
+          <button type="submit" form="form-evento" class="btn btn-primario">Salvar</button>
+        </div>
+      </footer>
+    </div>
+  </div>
+
+  <!-- ===================== MODAL INSCRIÇÕES ===================== -->
+  <div id="modal-inscricoes" class="modal oculto">
+    <div class="modal-caixa">
+      <header class="modal-topo">
+        <h2 id="modal-insc-titulo">Interessados</h2>
+        <button class="btn-fechar" data-fechar-insc>&times;</button>
+      </header>
+      <div class="modal-corpo">
+        <div class="barra-filtros">
+          <input type="search" id="busca-insc" placeholder="Buscar contato para adicionar…">
+        </div>
+        <div id="busca-insc-res"></div>
+        <h3 style="margin:16px 0 6px;font-size:15px">Lista de interessados</h3>
+        <div id="lista-inscricoes"></div>
+      </div>
+      <footer class="modal-rodape">
+        <p class="ajuda" style="margin:0">Negociando/Reservado aparecem no Follow-up.</p>
+        <button type="button" class="btn" data-fechar-insc>Fechar</button>
       </footer>
     </div>
   </div>

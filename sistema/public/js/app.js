@@ -48,7 +48,10 @@ function ligarEventosGlobais() {
   }));
   $$('[data-fechar-modal]').forEach(b => b.addEventListener('click', fecharModal));
   $$('[data-fechar-turma]').forEach(b => b.addEventListener('click', () => $('#modal-turma').classList.add('oculto')));
+  $$('[data-fechar-evento]').forEach(b => b.addEventListener('click', () => $('#modal-evento').classList.add('oculto')));
+  $$('[data-fechar-insc]').forEach(b => b.addEventListener('click', () => $('#modal-inscricoes').classList.add('oculto')));
   $('#form-contato').addEventListener('submit', aoSalvarContato);
+  $('#form-evento').addEventListener('submit', aoSalvarEvento);
 }
 
 // ---------- Auth ----------
@@ -97,6 +100,7 @@ function trocarView(view) {
   if (view === 'importar')  renderImportar();
   if (view === 'turmas')    renderTurmas();
   if (view === 'presenca')  renderPresenca();
+  if (view === 'eventos')   renderEventos();
   if (view === 'followup')  renderFollowup();
 }
 
@@ -304,28 +308,55 @@ function fecharModal() { $('#modal-contato').classList.add('oculto'); }
 // ---------- Follow-up ----------
 async function renderFollowup() {
   const alvo = $('#view-followup');
-  alvo.innerHTML = '<div class="view-topo"><h2>Follow-up de hoje</h2></div><p class="vazio">Carregando…</p>';
-  const r = await API.get('contatos.php?acao=followup');
-  if (!r.success) { alvo.innerHTML = '<p class="vazio">Erro ao carregar.</p>'; return; }
-  if (!r.data.length) {
-    alvo.innerHTML = '<div class="view-topo"><h2>Follow-up de hoje</h2></div><p class="vazio">Nenhum contato pendente. 🎉</p>';
-    return;
+  alvo.innerHTML = '<div class="view-topo"><h2>Follow-up</h2></div><p class="vazio">Carregando…</p>';
+  const [rc, re] = await Promise.all([
+    API.get('contatos.php?acao=followup'),
+    API.get('evento_inscricoes.php?acao=followup'),
+  ]);
+
+  // Seção 1: contatos com próximo contato vencido/hoje
+  let secContatos;
+  if (rc.success && rc.data.length) {
+    secContatos = `
+      <h3 style="margin:6px 0 10px">Contatos para retornar (${rc.data.length})</h3>
+      <div class="tabela-wrap"><table>
+        <thead><tr><th>Nome</th><th>WhatsApp</th><th>Tipo</th><th>Previsto</th><th></th></tr></thead>
+        <tbody>${rc.data.map(c => `
+          <tr>
+            <td>${esc(c.nome)} ${esc(c.sobrenome || '')}</td>
+            <td>${esc(c.whatsapp)}</td>
+            <td><span class="badge tp-${c.tipo_contato}">${rotulo('tipo_contato', c.tipo_contato)}</span></td>
+            <td class="venc">${c.data_proximo_contato}</td>
+            <td><button class="btn" data-editar="${c.id}">Abrir</button></td>
+          </tr>`).join('')}</tbody></table></div>`;
+  } else {
+    secContatos = '<h3 style="margin:6px 0 10px">Contatos para retornar</h3><p class="vazio">Nenhum contato pendente. 🎉</p>';
   }
-  const linhas = r.data.map(c => `
-    <tr>
-      <td>${esc(c.nome)} ${esc(c.sobrenome || '')}</td>
-      <td>${esc(c.whatsapp)}</td>
-      <td><span class="badge tp-${c.tipo_contato}">${rotulo('tipo_contato', c.tipo_contato)}</span></td>
-      <td class="venc">${c.data_proximo_contato}</td>
-      <td><button class="btn" data-editar="${c.id}">Abrir</button></td>
-    </tr>`).join('');
-  alvo.innerHTML = `
-    <div class="view-topo"><h2>Follow-up de hoje</h2></div>
-    <div class="tabela-wrap">
-      <table><thead><tr><th>Nome</th><th>WhatsApp</th><th>Tipo</th><th>Previsto</th><th></th></tr></thead>
-      <tbody>${linhas}</tbody></table>
-    </div>`;
+
+  // Seção 2: negociações de eventos (negociando/reservado)
+  const hoje = new Date().toISOString().slice(0, 10);
+  let secEventos;
+  if (re.success && re.data.length) {
+    secEventos = `
+      <h3 style="margin:22px 0 10px">Negociações de eventos (${re.data.length})</h3>
+      <div class="tabela-wrap"><table>
+        <thead><tr><th>Contato</th><th>Evento</th><th>Situação</th><th>Valor</th><th>Follow-up</th><th></th></tr></thead>
+        <tbody>${re.data.map(i => `
+          <tr>
+            <td>${esc(i.nome)} ${esc(i.sobrenome || '')}<br><small style="color:var(--cinza)">${esc(i.whatsapp)}</small></td>
+            <td>${esc(i.evento_nome)}<br><small style="color:var(--cinza)">${rotulo('evento_tipo', i.evento_tipo)}</small></td>
+            <td><span class="badge tp-${i.status === 'reservado' ? 'aluno' : 'nao_aluno'}">${rotulo('inscricao_status', i.status)}</span></td>
+            <td>${fmtMoeda(i.valor)}</td>
+            <td class="${i.data_followup && i.data_followup <= hoje ? 'venc' : ''}">${i.data_followup || '—'}</td>
+            <td><button class="btn" data-abrir-ev="${i.evento_id}" data-nome="${esc(i.evento_nome)}">Abrir</button></td>
+          </tr>`).join('')}</tbody></table></div>`;
+  } else {
+    secEventos = '<h3 style="margin:22px 0 10px">Negociações de eventos</h3><p class="vazio">Nenhuma negociação aberta.</p>';
+  }
+
+  alvo.innerHTML = `<div class="view-topo"><h2>Follow-up</h2></div>${secContatos}${secEventos}`;
   $$('[data-editar]', alvo).forEach(b => b.addEventListener('click', () => abrirModalContato(+b.dataset.editar)));
+  $$('[data-abrir-ev]', alvo).forEach(b => b.addEventListener('click', () => abrirInscricoes(+b.dataset.abrirEv, b.dataset.nome)));
 }
 
 // ---------- Helpers de referência ----------
@@ -340,6 +371,169 @@ function rotulo(chave, valor) {
 }
 function debounce(fn, ms) {
   let t; return (...a) => { clearTimeout(t); t = setTimeout(() => fn(...a), ms); };
+}
+
+// ================= EVENTOS + INSCRIÇÕES =================
+let inscEventoAtual = null;
+
+function fmtMoeda(v) {
+  if (v == null || v === '') return '—';
+  return 'R$ ' + Number(v).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+}
+function fmtDataHora(s) {
+  if (!s) return '—';
+  return String(s).slice(0, 16).replace('T', ' ').replace(/-/g, '/').replace(/(\d{4})\/(\d{2})\/(\d{2})/, '$3/$2/$1');
+}
+
+async function renderEventos() {
+  const alvo = $('#view-eventos');
+  alvo.innerHTML = `
+    <div class="view-topo">
+      <h2>Eventos</h2>
+      <button class="btn btn-primario" id="btn-novo-evento">+ Novo evento</button>
+    </div>
+    <div id="lista-eventos"><p class="vazio">Carregando…</p></div>`;
+  $('#btn-novo-evento').addEventListener('click', () => abrirModalEvento(null));
+  carregarEventos();
+}
+
+async function carregarEventos() {
+  const alvo = $('#lista-eventos');
+  const r = await API.get('eventos.php?acao=listar');
+  if (!r.success) { alvo.innerHTML = '<p class="vazio">Erro ao carregar.</p>'; return; }
+  if (!r.data.length) { alvo.innerHTML = '<p class="vazio">Nenhum evento ainda. Crie o primeiro.</p>'; return; }
+  alvo.innerHTML = `<div class="tabela-wrap"><table>
+    <thead><tr><th>Evento</th><th>Tipo</th><th>Quando</th><th>Valor</th><th>Interessados</th><th></th></tr></thead>
+    <tbody>${r.data.map(e => `
+      <tr>
+        <td>${esc(e.nome)}${e.ativo == 0 ? ' <span class="badge tp-nao_contatar">inativo</span>' : ''}</td>
+        <td>${rotulo('evento_tipo', e.tipo)}</td>
+        <td>${fmtDataHora(e.data_evento)}</td>
+        <td>${fmtMoeda(e.valor)}</td>
+        <td>${e.pagos} pago(s) · ${e.em_negociacao} negoc.</td>
+        <td class="acoes-linha">
+          <button class="btn btn-primario" data-insc="${e.id}" data-nome="${esc(e.nome)}">Interessados</button>
+          <button class="btn" data-edit-ev="${e.id}">Editar</button>
+          <button class="btn btn-perigo" data-del-ev="${e.id}" data-nome="${esc(e.nome)}">Excluir</button>
+        </td>
+      </tr>`).join('')}</tbody></table></div>`;
+  $$('[data-insc]', alvo).forEach(b => b.addEventListener('click', () => abrirInscricoes(+b.dataset.insc, b.dataset.nome)));
+  $$('[data-edit-ev]', alvo).forEach(b => b.addEventListener('click', () => abrirModalEvento(+b.dataset.editEv)));
+  $$('[data-del-ev]', alvo).forEach(b => b.addEventListener('click', () => excluirEvento(+b.dataset.delEv, b.dataset.nome)));
+}
+
+async function abrirModalEvento(id) {
+  const form = $('#form-evento');
+  $('#form-evento-msg').textContent = '';
+  $('#modal-evento-titulo').textContent = id ? 'Editar evento' : 'Novo evento';
+  form.dataset.id = id || '';
+  form.innerHTML = `
+    <label class="full">Nome*<input name="nome" required maxlength="160"></label>
+    <label>Tipo*<select name="tipo" required>${opcoes('evento_tipo')}</select></label>
+    <label>Data e hora<input name="data_evento" type="datetime-local"></label>
+    <label>Valor (R$)<input name="valor" type="number" step="0.01" min="0"></label>
+    <label>Vagas<input name="vagas" type="number" min="0"></label>
+    <label class="full">Local<input name="local" maxlength="200"></label>
+    <label class="full">Descrição<textarea name="descricao" rows="2"></textarea></label>
+    <label class="checks" style="align-items:center"><input type="checkbox" name="ativo" checked> Evento ativo</label>`;
+  if (id) {
+    const r = await API.get('eventos.php?acao=obter&id=' + id);
+    if (r.success) {
+      const d = r.data;
+      form.querySelectorAll('input,select,textarea').forEach(el => {
+        if (el.type === 'checkbox') { el.checked = d.ativo == 1; return; }
+        if (el.name === 'data_evento' && d.data_evento) { el.value = String(d.data_evento).slice(0, 16).replace(' ', 'T'); return; }
+        if (d[el.name] != null) el.value = d[el.name];
+      });
+    }
+  }
+  $('#modal-evento').classList.remove('oculto');
+}
+
+async function aoSalvarEvento(e) {
+  e.preventDefault();
+  const form = e.target;
+  const dados = {};
+  form.querySelectorAll('input,select,textarea').forEach(el => {
+    dados[el.name] = el.type === 'checkbox' ? (el.checked ? 1 : 0) : el.value;
+  });
+  const id = form.dataset.id;
+  const url = id ? ('eventos.php?acao=atualizar&id=' + id) : 'eventos.php?acao=criar';
+  const r = await API.post(url, dados);
+  if (r.success) { $('#modal-evento').classList.add('oculto'); toast(r.message); carregarEventos(); }
+  else {
+    $('#form-evento-msg').className = 'msg erro';
+    $('#form-evento-msg').textContent = (r.errors[0] && r.errors[0].message) || r.message;
+  }
+}
+
+async function excluirEvento(id, nome) {
+  if (!confirm(`Excluir o evento "${nome}" e todas as inscrições dele?`)) return;
+  const r = await API.post('eventos.php?acao=excluir&id=' + id, {});
+  if (r.success) { toast('Evento excluído.'); carregarEventos(); } else { toast(r.message, 'erro'); }
+}
+
+// ----- Inscrições / interessados -----
+function abrirInscricoes(eventoId, nome) {
+  inscEventoAtual = eventoId;
+  $('#modal-insc-titulo').textContent = 'Interessados — ' + nome;
+  $('#busca-insc').value = '';
+  $('#busca-insc-res').innerHTML = '';
+  $('#modal-inscricoes').classList.remove('oculto');
+  const busca = $('#busca-insc');
+  busca.oninput = debounce(async () => {
+    const q = busca.value.trim();
+    if (q.length < 2) { $('#busca-insc-res').innerHTML = ''; return; }
+    const r = await API.get('evento_inscricoes.php?acao=buscar_contatos&q=' + encodeURIComponent(q));
+    if (!r.success) return;
+    $('#busca-insc-res').innerHTML = r.data.length
+      ? r.data.map(c => `
+          <div class="linha-busca">
+            <span>${esc(c.nome)} ${esc(c.sobrenome || '')} · ${esc(c.whatsapp)}</span>
+            <button class="btn btn-primario" data-add-insc="${c.id}">+ Adicionar</button>
+          </div>`).join('')
+      : '<p class="ajuda">Nenhum contato encontrado.</p>';
+    $$('#busca-insc-res [data-add-insc]').forEach(b => b.addEventListener('click', () => adicionarInscrito(+b.dataset.addInsc)));
+  }, 350);
+  carregarInscricoes();
+}
+
+async function adicionarInscrito(contatoId) {
+  const r = await API.post('evento_inscricoes.php?acao=criar', { evento_id: inscEventoAtual, contato_id: contatoId });
+  if (r.success) { toast('Interessado adicionado.'); $('#busca-insc').value = ''; $('#busca-insc-res').innerHTML = ''; carregarInscricoes(); }
+  else { toast(r.message || 'Erro.', 'erro'); }
+}
+
+async function carregarInscricoes() {
+  const alvo = $('#lista-inscricoes');
+  alvo.innerHTML = '<p class="ajuda">Carregando…</p>';
+  const r = await API.get('evento_inscricoes.php?acao=por_evento&evento_id=' + inscEventoAtual);
+  if (!r.success) { alvo.innerHTML = '<p class="ajuda">Erro ao carregar.</p>'; return; }
+  if (!r.data.length) { alvo.innerHTML = '<p class="vazio">Nenhum interessado ainda.</p>'; return; }
+  alvo.innerHTML = `<div class="tabela-wrap"><table>
+    <thead><tr><th>Contato</th><th>Situação</th><th>Valor</th><th>Follow-up</th><th></th></tr></thead>
+    <tbody>${r.data.map(i => `
+      <tr>
+        <td>${esc(i.nome)} ${esc(i.sobrenome || '')}<br><small style="color:var(--cinza)">${esc(i.whatsapp)}</small></td>
+        <td><select data-insc-status="${i.id}">${opcoes('inscricao_status', i.status)}</select></td>
+        <td><input data-insc-valor="${i.id}" type="number" step="0.01" min="0" value="${i.valor ?? ''}" style="width:90px"></td>
+        <td><input data-insc-fup="${i.id}" type="date" value="${i.data_followup ?? ''}"></td>
+        <td><button class="btn btn-perigo" data-insc-del="${i.id}">Remover</button></td>
+      </tr>`).join('')}</tbody></table></div>
+    <p class="ajuda">Alterou situação, valor ou data? Clique fora do campo para salvar.</p>`;
+
+  const salvar = (id, campo, valor) =>
+    API.post('evento_inscricoes.php?acao=atualizar&id=' + id, { [campo]: valor })
+      .then(r2 => toast(r2.success ? 'Salvo.' : (r2.message || 'Erro.'), r2.success ? 'ok' : 'erro'));
+
+  $$('[data-insc-status]', alvo).forEach(s => s.addEventListener('change', () => salvar(s.dataset.inscStatus, 'status', s.value)));
+  $$('[data-insc-valor]', alvo).forEach(inp => inp.addEventListener('change', () => salvar(inp.dataset.inscValor, 'valor', inp.value)));
+  $$('[data-insc-fup]', alvo).forEach(inp => inp.addEventListener('change', () => salvar(inp.dataset.inscFup, 'data_followup', inp.value)));
+  $$('[data-insc-del]', alvo).forEach(b => b.addEventListener('click', async () => {
+    if (!confirm('Remover este interessado?')) return;
+    const r2 = await API.post('evento_inscricoes.php?acao=excluir&id=' + b.dataset.inscDel, {});
+    if (r2.success) { toast('Removido.'); carregarInscricoes(); } else { toast(r2.message, 'erro'); }
+  }));
 }
 
 // ================= TURMAS + MATRÍCULAS =================

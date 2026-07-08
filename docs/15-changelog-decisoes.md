@@ -2,6 +2,26 @@
 
 ## Changelog
 
+### [0.3.0] — 2026-07-08
+
+#### Adicionado
+
+- Módulo **Eventos**: curso intensivo, baile/festa, workshop, turma regular.
+  - `api/eventos.php` (CRUD + contadores) e `api/evento_inscricoes.php`
+    (interessados, status, valor, follow-up).
+  - Situação do interessado: negociando · reservado · pago · cancelado ·
+    sem_interesse ("não tenho mais interesse").
+  - Tela "Eventos" (lista + modal de evento + modal de interessados com edição
+    inline de situação/valor/data de follow-up).
+  - **Follow-up** agora tem 2 seções: contatos a retornar + negociações de
+    eventos (negociando/reservado).
+
+#### Banco (requer migration)
+
+- `evento_inscricoes.status` passou a `negociando/reservado/pago/cancelado/sem_interesse`
+  e ganhou coluna `data_followup`. Rodar `database/migrations/001_eventos_inscricoes_status.sql`
+  no banco de produção (base sem inscrições ainda → seguro).
+
 ### [0.2.1] — 2026-07-08
 
 #### Alterado
