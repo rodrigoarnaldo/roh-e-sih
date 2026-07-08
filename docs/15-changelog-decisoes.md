@@ -2,6 +2,18 @@
 
 ## Changelog
 
+### [0.1.2] — 2026-07-08
+
+#### Adicionado
+
+- Importação de contatos por **CSV** (tela "Importar"): lê o arquivo no navegador,
+  mapeia colunas (com adivinhação automática), prévia, e importa em lote como
+  `nao_aluno`. Endpoint `api/contatos_importar.php` valida no backend, ignora
+  duplicados (por whatsapp, no arquivo e no banco) e retorna resumo
+  (inseridos / ignorados / erros por linha).
+- `config.php` passa a carregar `.env` como fallback das variáveis de ambiente
+  (compatível com o "Create env file" do EasyPanel).
+
 ### [0.1.1] — 2026-07-08
 
 #### Adicionado

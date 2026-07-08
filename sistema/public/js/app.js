@@ -93,6 +93,7 @@ function trocarView(view) {
   $('#view-' + view).classList.remove('oculto');
   if (view === 'dashboard') renderDashboard();
   if (view === 'contatos')  renderContatos();
+  if (view === 'importar')  renderImportar();
   if (view === 'followup')  renderFollowup();
 }
 
@@ -336,4 +337,174 @@ function rotulo(chave, valor) {
 }
 function debounce(fn, ms) {
   let t; return (...a) => { clearTimeout(t); t = setTimeout(() => fn(...a), ms); };
+}
+
+// ================= IMPORTAÇÃO DE CSV (não alunos) =================
+const CAMPOS_IMPORT = [
+  { chave: 'nome',      rotulo: 'Nome',      obrig: true,  dicas: ['nome', 'name', 'primeiro'] },
+  { chave: 'sobrenome', rotulo: 'Sobrenome', obrig: false, dicas: ['sobrenome', 'last', 'apelido'] },
+  { chave: 'whatsapp',  rotulo: 'WhatsApp',  obrig: true,  dicas: ['whats', 'telefone', 'celular', 'fone', 'phone', 'tel', 'contato'] },
+  { chave: 'cidade',    rotulo: 'Cidade',    obrig: false, dicas: ['cidade', 'city', 'municip'] },
+  { chave: 'uf',        rotulo: 'UF',        obrig: false, dicas: ['uf', 'estado', 'state'] },
+  { chave: 'cpf',       rotulo: 'CPF',       obrig: false, dicas: ['cpf', 'documento'] },
+  { chave: 'origem',    rotulo: 'Origem',    obrig: false, dicas: ['origem', 'fonte', 'source'] },
+];
+let CSV = { cabecalho: [], linhas: [] };
+
+function renderImportar() {
+  CSV = { cabecalho: [], linhas: [] };
+  $('#view-importar').innerHTML = `
+    <div class="view-topo"><h2>Importar não alunos (CSV)</h2></div>
+    <div class="tabela-wrap" style="padding:20px">
+      <p class="ajuda">Selecione um arquivo <strong>.csv</strong> com uma linha de cabeçalho. Cada linha vira um contato do tipo <strong>não aluno</strong>. Duplicados (mesmo WhatsApp) são ignorados.</p>
+      <input type="file" id="arquivo-csv" accept=".csv,text/csv">
+      <div id="importar-passo2"></div>
+    </div>`;
+  $('#arquivo-csv').addEventListener('change', aoEscolherCsv);
+}
+
+function aoEscolherCsv(e) {
+  const arq = e.target.files[0];
+  if (!arq) return;
+  const leitor = new FileReader();
+  leitor.onload = () => {
+    const linhas = parseCSV(leitor.result);
+    if (linhas.length < 2) { toast('Arquivo vazio ou sem dados.', 'erro'); return; }
+    CSV.cabecalho = linhas[0].map(h => (h || '').trim());
+    CSV.linhas = linhas.slice(1).filter(l => l.some(c => (c || '').trim() !== ''));
+    montarMapeamento();
+  };
+  leitor.readAsText(arq, 'UTF-8');
+}
+
+// Parser CSV com suporte a aspas e auto-detecção de delimitador (, ou ;)
+function parseCSV(texto) {
+  texto = texto.replace(/^﻿/, ''); // remove BOM
+  const fim = texto.indexOf('\n');
+  const primeira = fim === -1 ? texto : texto.slice(0, fim);
+  const delim = (primeira.split(';').length > primeira.split(',').length) ? ';' : ',';
+  const linhas = [];
+  let campo = '', linha = [], aspas = false;
+  for (let i = 0; i < texto.length; i++) {
+    const c = texto[i];
+    if (aspas) {
+      if (c === '"') { if (texto[i + 1] === '"') { campo += '"'; i++; } else aspas = false; }
+      else campo += c;
+    } else if (c === '"') { aspas = true; }
+    else if (c === delim) { linha.push(campo); campo = ''; }
+    else if (c === '\n') { linha.push(campo); linhas.push(linha); linha = []; campo = ''; }
+    else if (c !== '\r') { campo += c; }
+  }
+  if (campo !== '' || linha.length) { linha.push(campo); linhas.push(linha); }
+  return linhas;
+}
+
+function montarMapeamento() {
+  const norm = s => (s || '').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '');
+  const adivinhar = (campo) => {
+    for (let idx = 0; idx < CSV.cabecalho.length; idx++) {
+      const h = norm(CSV.cabecalho[idx]);
+      if (campo.dicas.some(d => h.includes(d))) return idx;
+    }
+    return -1;
+  };
+  const opcoesColunas = (sel) =>
+    `<option value="-1">— ignorar —</option>` +
+    CSV.cabecalho.map((h, i) => `<option value="${i}" ${i === sel ? 'selected' : ''}>${esc(h || ('coluna ' + (i + 1)))}</option>`).join('');
+
+  const mapLinhas = CAMPOS_IMPORT.map(c => `
+    <label>${c.rotulo}${c.obrig ? '*' : ''}
+      <select data-campo="${c.chave}">${opcoesColunas(adivinhar(c))}</select>
+    </label>`).join('');
+
+  $('#importar-passo2').innerHTML = `
+    <hr style="margin:18px 0;border:none;border-top:1px solid var(--linha)">
+    <h3 style="margin:0 0 4px">Mapeie as colunas (${CSV.linhas.length} linhas)</h3>
+    <div class="form-contato" style="padding:0;grid-template-columns:1fr 1fr 1fr">${mapLinhas}</div>
+    <div class="barra-filtros" style="margin-top:12px">
+      <label style="font-size:13px;color:var(--cinza)">Origem padrão (opcional)
+        <input id="imp-origem" placeholder="ex.: planilha antiga, lista evento">
+      </label>
+      <label style="font-size:13px;color:var(--cinza)">Status (não aluno)
+        <select id="imp-status"><option value="">— nenhum —</option>${opcoes('status_nao_aluno')}</select>
+      </label>
+    </div>
+    <div id="imp-previa"></div>
+    <div style="margin-top:14px;display:flex;gap:10px;align-items:center">
+      <button class="btn btn-primario" id="btn-importar">Importar ${CSV.linhas.length} contato(s)</button>
+      <span id="imp-msg" class="msg"></span>
+    </div>
+    <div id="imp-resultado"></div>`;
+
+  $$('#importar-passo2 [data-campo]').forEach(s => s.addEventListener('change', renderPrevia));
+  $('#btn-importar').addEventListener('click', executarImportacao);
+  renderPrevia();
+}
+
+function lerMapeamento() {
+  const map = {};
+  $$('#importar-passo2 [data-campo]').forEach(s => { map[s.dataset.campo] = parseInt(s.value, 10); });
+  return map;
+}
+
+function linhaParaObjeto(linha, map) {
+  const o = {};
+  CAMPOS_IMPORT.forEach(c => {
+    const idx = map[c.chave];
+    o[c.chave] = (idx >= 0 && linha[idx] != null) ? String(linha[idx]).trim() : '';
+  });
+  return o;
+}
+
+function renderPrevia() {
+  const map = lerMapeamento();
+  const amostra = CSV.linhas.slice(0, 5).map(l => linhaParaObjeto(l, map));
+  const linhas = amostra.map(o => `
+    <tr><td>${esc(o.nome)}</td><td>${esc(o.sobrenome)}</td><td>${esc(o.whatsapp)}</td>
+    <td>${esc(o.cidade)}</td><td>${esc(o.uf)}</td><td>${esc(o.origem)}</td></tr>`).join('');
+  $('#imp-previa').innerHTML = `
+    <p class="ajuda" style="margin-top:14px">Prévia das 5 primeiras linhas:</p>
+    <div class="tabela-wrap"><table>
+      <thead><tr><th>Nome</th><th>Sobrenome</th><th>WhatsApp</th><th>Cidade</th><th>UF</th><th>Origem</th></tr></thead>
+      <tbody>${linhas}</tbody></table></div>`;
+}
+
+async function executarImportacao() {
+  const map = lerMapeamento();
+  if (map.nome < 0 || map.whatsapp < 0) {
+    $('#imp-msg').className = 'msg erro';
+    $('#imp-msg').textContent = 'Mapeie ao menos Nome e WhatsApp.';
+    return;
+  }
+  const registros = CSV.linhas.map(l => linhaParaObjeto(l, map))
+    .filter(o => o.nome !== '' || o.whatsapp !== '');
+
+  const btn = $('#btn-importar');
+  btn.disabled = true; btn.textContent = 'Importando…';
+  $('#imp-msg').className = 'msg'; $('#imp-msg').textContent = '';
+
+  const r = await API.post('contatos_importar.php', {
+    registros,
+    origem_padrao: $('#imp-origem').value.trim() || null,
+    status_padrao: $('#imp-status').value || null,
+  });
+
+  btn.disabled = false; btn.textContent = 'Importar novamente';
+  if (!r.success) {
+    $('#imp-msg').className = 'msg erro';
+    $('#imp-msg').textContent = (r.errors[0] && r.errors[0].message) || r.message;
+    return;
+  }
+  const d = r.data;
+  const errosHtml = d.erros.length
+    ? `<details style="margin-top:8px"><summary>${d.erros.length} linha(s) com erro</summary>
+       <ul>${d.erros.slice(0, 50).map(e => `<li>Linha ${e.linha}: ${esc(e.motivo)}</li>`).join('')}</ul></details>`
+    : '';
+  $('#imp-resultado').innerHTML = `
+    <div class="grid-cards" style="margin-top:16px">
+      <div class="card-stat"><div class="num">${d.inseridos}</div><div class="rot">Inseridos</div></div>
+      <div class="card-stat"><div class="num">${d.ignorados_duplicados}</div><div class="rot">Ignorados (duplicados)</div></div>
+      <div class="card-stat destaque"><div class="num">${d.erros.length}</div><div class="rot">Com erro</div></div>
+    </div>${errosHtml}`;
+  toast(r.message);
 }
