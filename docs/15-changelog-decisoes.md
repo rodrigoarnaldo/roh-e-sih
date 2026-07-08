@@ -2,6 +2,16 @@
 
 ## Changelog
 
+### [0.2.1] — 2026-07-08
+
+#### Alterado
+
+- Importação por CSV agora é de **contatos** (não mais só "não alunos"): o tipo
+  é lido de uma coluna do arquivo, com **normalizador** (interpreta "Aluno",
+  "Ex-aluno", "Não aluno", "Não contatar" e variações). Tipo padrão configurável
+  para linhas sem tipo reconhecido; prévia mostra o tipo interpretado; resultado
+  traz contagem por tipo. `status_nao_aluno` aplicado só a linhas `nao_aluno`.
+
 ### [0.2.0] — 2026-07-08
 
 #### Adicionado

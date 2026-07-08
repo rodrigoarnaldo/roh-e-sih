@@ -47,7 +47,7 @@ Base: `sistema/api/`. Todos usam o envelope oficial. `meta` carrega paginação.
 | POST | `contatos.php?acao=criar` | Cria contato | sim | sim |
 | POST | `contatos.php?acao=atualizar&id=` | Atualiza contato | sim | sim |
 | POST | `contatos.php?acao=excluir&id=` | Exclui contato | sim | sim |
-| POST | `contatos_importar.php` | Importa CSV em lote como `nao_aluno` (ignora duplicados por whatsapp) | sim | sim |
+| POST | `contatos_importar.php` | Importa contatos por CSV; tipo lido de coluna (normalizado) + tipo padrão; ignora duplicados por whatsapp | sim | sim |
 | GET  | `matriculas.php?acao=turmas_resumo` | Turmas + nº de matriculados ativos | sim | não |
 | GET  | `matriculas.php?acao=por_turma&turma_id=` | Alunos matriculados na turma | sim | não |
 | GET  | `matriculas.php?acao=por_contato&contato_id=` | Turmas de um contato | sim | não |

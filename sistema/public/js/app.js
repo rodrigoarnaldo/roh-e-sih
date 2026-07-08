@@ -503,6 +503,7 @@ const CAMPOS_IMPORT = [
   { chave: 'nome',      rotulo: 'Nome',      obrig: true,  dicas: ['nome', 'name', 'primeiro'] },
   { chave: 'sobrenome', rotulo: 'Sobrenome', obrig: false, dicas: ['sobrenome', 'last', 'apelido'] },
   { chave: 'whatsapp',  rotulo: 'WhatsApp',  obrig: true,  dicas: ['whats', 'telefone', 'celular', 'fone', 'phone', 'tel', 'contato'] },
+  { chave: 'tipo',      rotulo: 'Tipo',      obrig: false, dicas: ['tipo', 'situacao', 'categoria', 'classific', 'perfil'] },
   { chave: 'cidade',    rotulo: 'Cidade',    obrig: false, dicas: ['cidade', 'city', 'municip'] },
   { chave: 'uf',        rotulo: 'UF',        obrig: false, dicas: ['uf', 'estado', 'state'] },
   { chave: 'cpf',       rotulo: 'CPF',       obrig: false, dicas: ['cpf', 'documento'] },
@@ -510,12 +511,26 @@ const CAMPOS_IMPORT = [
 ];
 let CSV = { cabecalho: [], linhas: [] };
 
+// Normalizador do tipo (espelha o backend) — usado só na prévia.
+function normalizarTipoJS(v) {
+  if (!v) return null;
+  let s = String(v).toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '').replace(/[^a-z]+/g, ' ').trim();
+  if (!s) return null;
+  const direto = s.replace(/ /g, '_');
+  if (['nao_aluno', 'aluno', 'ex_aluno', 'nao_contatar'].includes(direto)) return direto;
+  if (s.startsWith('ex') || s.includes('ex aluno')) return 'ex_aluno';
+  if (s.includes('nao contatar') || s.includes('bloq') || s.includes('nao contat')) return 'nao_contatar';
+  if (s.includes('nao aluno') || s.includes('lead') || s.includes('prospect')) return 'nao_aluno';
+  if (s.includes('aluno') || s.includes('ativo') || s.includes('matricul')) return 'aluno';
+  return null;
+}
+
 function renderImportar() {
   CSV = { cabecalho: [], linhas: [] };
   $('#view-importar').innerHTML = `
-    <div class="view-topo"><h2>Importar não alunos (CSV)</h2></div>
+    <div class="view-topo"><h2>Importar contatos (CSV)</h2></div>
     <div class="tabela-wrap" style="padding:20px">
-      <p class="ajuda">Selecione um arquivo <strong>.csv</strong> com uma linha de cabeçalho. Cada linha vira um contato do tipo <strong>não aluno</strong>. Duplicados (mesmo WhatsApp) são ignorados.</p>
+      <p class="ajuda">Selecione um arquivo <strong>.csv</strong> com uma linha de cabeçalho. O <strong>tipo</strong> de cada contato pode vir de uma coluna do arquivo; quando faltar, usa o tipo padrão que você escolher. Duplicados (mesmo WhatsApp) são ignorados.</p>
       <input type="file" id="arquivo-csv" accept=".csv,text/csv">
       <div id="importar-passo2"></div>
     </div>`;
@@ -581,10 +596,13 @@ function montarMapeamento() {
     <h3 style="margin:0 0 4px">Mapeie as colunas (${CSV.linhas.length} linhas)</h3>
     <div class="form-contato" style="padding:0;grid-template-columns:1fr 1fr 1fr">${mapLinhas}</div>
     <div class="barra-filtros" style="margin-top:12px">
+      <label style="font-size:13px;color:var(--cinza)">Tipo padrão (quando a coluna não indicar)
+        <select id="imp-tipo">${opcoes('tipo_contato', 'nao_aluno')}</select>
+      </label>
       <label style="font-size:13px;color:var(--cinza)">Origem padrão (opcional)
         <input id="imp-origem" placeholder="ex.: planilha antiga, lista evento">
       </label>
-      <label style="font-size:13px;color:var(--cinza)">Status (não aluno)
+      <label style="font-size:13px;color:var(--cinza)">Status — só p/ não aluno
         <select id="imp-status"><option value="">— nenhum —</option>${opcoes('status_nao_aluno')}</select>
       </label>
     </div>
@@ -596,6 +614,7 @@ function montarMapeamento() {
     <div id="imp-resultado"></div>`;
 
   $$('#importar-passo2 [data-campo]').forEach(s => s.addEventListener('change', renderPrevia));
+  $('#imp-tipo').addEventListener('change', renderPrevia);
   $('#btn-importar').addEventListener('click', executarImportacao);
   renderPrevia();
 }
@@ -617,14 +636,18 @@ function linhaParaObjeto(linha, map) {
 
 function renderPrevia() {
   const map = lerMapeamento();
+  const tipoPadrao = ($('#imp-tipo') && $('#imp-tipo').value) || 'nao_aluno';
   const amostra = CSV.linhas.slice(0, 5).map(l => linhaParaObjeto(l, map));
-  const linhas = amostra.map(o => `
-    <tr><td>${esc(o.nome)}</td><td>${esc(o.sobrenome)}</td><td>${esc(o.whatsapp)}</td>
-    <td>${esc(o.cidade)}</td><td>${esc(o.uf)}</td><td>${esc(o.origem)}</td></tr>`).join('');
+  const linhas = amostra.map(o => {
+    const t = normalizarTipoJS(o.tipo) || tipoPadrao;
+    return `<tr><td>${esc(o.nome)}</td><td>${esc(o.sobrenome)}</td><td>${esc(o.whatsapp)}</td>
+      <td><span class="badge tp-${t}">${rotulo('tipo_contato', t)}</span></td>
+      <td>${esc(o.cidade)}</td><td>${esc(o.uf)}</td><td>${esc(o.origem)}</td></tr>`;
+  }).join('');
   $('#imp-previa').innerHTML = `
-    <p class="ajuda" style="margin-top:14px">Prévia das 5 primeiras linhas:</p>
+    <p class="ajuda" style="margin-top:14px">Prévia das 5 primeiras linhas (confira o Tipo interpretado):</p>
     <div class="tabela-wrap"><table>
-      <thead><tr><th>Nome</th><th>Sobrenome</th><th>WhatsApp</th><th>Cidade</th><th>UF</th><th>Origem</th></tr></thead>
+      <thead><tr><th>Nome</th><th>Sobrenome</th><th>WhatsApp</th><th>Tipo</th><th>Cidade</th><th>UF</th><th>Origem</th></tr></thead>
       <tbody>${linhas}</tbody></table></div>`;
 }
 
@@ -644,8 +667,9 @@ async function executarImportacao() {
 
   const r = await API.post('contatos_importar.php', {
     registros,
+    tipo_padrao: $('#imp-tipo').value || 'nao_aluno',
     origem_padrao: $('#imp-origem').value.trim() || null,
-    status_padrao: $('#imp-status').value || null,
+    status_nao_aluno_padrao: $('#imp-status').value || null,
   });
 
   btn.disabled = false; btn.textContent = 'Importar novamente';
@@ -659,11 +683,16 @@ async function executarImportacao() {
     ? `<details style="margin-top:8px"><summary>${d.erros.length} linha(s) com erro</summary>
        <ul>${d.erros.slice(0, 50).map(e => `<li>Linha ${e.linha}: ${esc(e.motivo)}</li>`).join('')}</ul></details>`
     : '';
+  const pt = d.por_tipo || {};
+  const tiposHtml = Object.keys(pt).filter(k => pt[k] > 0)
+    .map(k => `<span class="badge tp-${k}" style="margin-right:6px">${rotulo('tipo_contato', k)}: ${pt[k]}</span>`).join('');
   $('#imp-resultado').innerHTML = `
     <div class="grid-cards" style="margin-top:16px">
       <div class="card-stat"><div class="num">${d.inseridos}</div><div class="rot">Inseridos</div></div>
       <div class="card-stat"><div class="num">${d.ignorados_duplicados}</div><div class="rot">Ignorados (duplicados)</div></div>
       <div class="card-stat destaque"><div class="num">${d.erros.length}</div><div class="rot">Com erro</div></div>
-    </div>${errosHtml}`;
+    </div>
+    ${tiposHtml ? `<p class="ajuda" style="margin-top:10px">Por tipo: ${tiposHtml}</p>` : ''}
+    ${errosHtml}`;
   toast(r.message);
 }

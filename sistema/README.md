@@ -45,7 +45,7 @@ sistema/
 |---|---|
 | Autenticação + instalação | ✅ implementado |
 | Contatos (CRM) + follow-up + dashboard | ✅ implementado |
-| Importação de não alunos por CSV | ✅ implementado |
+| Importação de contatos por CSV (tipo por coluna) | ✅ implementado |
 | Turmas / matrícula | ✅ implementado |
 | Presença / frequência | ✅ implementado |
 | Pagamentos / cobrança | 🟡 schema pronto |
