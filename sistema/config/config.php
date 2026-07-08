@@ -9,6 +9,35 @@ if (!defined('APP_INICIADO')) {
     define('APP_INICIADO', true);
 }
 
+// Carrega um arquivo .env (se existir), sem sobrescrever variáveis já presentes
+// no ambiente. Torna a config robusta tanto para variáveis de ambiente do
+// EasyPanel quanto para a opção "Create env file".
+(function () {
+    $candidatos = [dirname(__DIR__) . '/.env', __DIR__ . '/.env'];
+    foreach ($candidatos as $arquivo) {
+        if (!is_readable($arquivo)) {
+            continue;
+        }
+        foreach (file($arquivo, FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES) as $linha) {
+            $linha = trim($linha);
+            if ($linha === '' || $linha[0] === '#') {
+                continue;
+            }
+            $pos = strpos($linha, '=');
+            if ($pos === false) {
+                continue;
+            }
+            $chave = trim(substr($linha, 0, $pos));
+            $valor = preg_replace('/\s+#.*$/', '', trim(substr($linha, $pos + 1)));
+            $valor = trim($valor, "\"'");
+            if ($chave !== '' && getenv($chave) === false) {
+                putenv("$chave=$valor");
+            }
+        }
+        break;
+    }
+})();
+
 // --- Banco de dados ---
 define('DB_HOST', getenv('DB_HOST') ?: '127.0.0.1');
 define('DB_PORT', getenv('DB_PORT') ?: '3306');
