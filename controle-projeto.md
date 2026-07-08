@@ -93,8 +93,8 @@ Skills principais: skill-arquitetura, skill-dados, skill-mysql, skill-backend, s
 | Segurança/auditoria | em andamento | sessão, PDO, hash, logs; falta CSRF/rate-limit |
 | QA/testes | pendente | sem runtime PHP no ambiente de dev da IA |
 | Documentação | feito | docs 01,02,08,09,15 + sistema/README |
-| Git/GitHub | pendente | repo ainda não iniciado |
-| Docker/EasyPanel | pendente |  |
+| Git/GitHub | em andamento | repo iniciado (branch main, 1º commit); falta `git remote add` + push |
+| Docker/EasyPanel | em andamento | Dockerfile + apache.conf + compose prontos; falta criar serviços no painel |
 | Homologação | pendente |  |
 | Produção | pendente |  |
 | Monitoramento | pendente |  |
@@ -316,10 +316,12 @@ presença, pagamentos, eventos/inscrições, scripts de mensagem, indicações,
 avaliações.
 
 Próximo passo recomendado:
-1) Subir PHP+MySQL, rodar schema.sql + seed.sql, criar admin em api/instalar.php
-   e testar o fluxo de Contatos ponta a ponta.
-2) Implementar o próximo módulo priorizado (sugestão: Pagamentos ou Matrícula/
-   Presença) reusando o padrão de contatos.php (API) e app.js (tela).
+1) `git remote add origin <url>` + `git push -u origin main` (repo já commitado).
+2) No EasyPanel: criar serviço MySQL, importar schema.sql+seed.sql, criar serviço
+   App (build por Dockerfile), setar env (DB_* + APP_AMBIENTE=producao), domínio+SSL,
+   volume em /var/www/html/storage/videos. Depois abrir o domínio e criar o admin.
+3) Testar login/Contatos em produção; depois implementar Pagamentos ou Matrícula/
+   Presença reusando o padrão de contatos.php + app.js.
 
 Arquivos que devem ser lidos primeiro:
 sistema/README.md, sistema/database/schema.sql, sistema/api/_bootstrap.php,

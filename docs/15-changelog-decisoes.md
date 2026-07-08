@@ -2,6 +2,22 @@
 
 ## Changelog
 
+### [0.1.1] — 2026-07-08
+
+#### Adicionado
+
+- Infra de deploy para EasyPanel: `Dockerfile` (php:8.3-apache + PDO MySQL),
+  `sistema/deploy/apache.conf` (docroot em `public/`, `Alias /api`), `php.ini` de
+  produção, `docker-compose.yml` (dev: app + MySQL + phpMyAdmin com schema/seed).
+- Health check `GET /health.php`.
+- Repositório Git inicializado (branch `main`); `.gitignore` e `.dockerignore`.
+- docs/13 (deploy) preenchida com passo a passo GitHub + EasyPanel.
+
+#### Decisão de segurança
+
+- Docroot = `sistema/public`; `config/`, `database/` e `storage/` ficam fora do
+  webroot (não dependem de `.htaccess` para ficarem ocultos).
+
 ### [0.1.0] — 2026-07-08
 
 #### Adicionado
