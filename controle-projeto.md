@@ -88,8 +88,8 @@ Skills principais: skill-arquitetura, skill-dados, skill-mysql, skill-backend, s
 | Mapa de telas | em andamento | login, dashboard, contatos, follow-up |
 | Design/UX/UI | em andamento | tema roxo/rosa em public/css |
 | Banco de dados | feito | schema.sql cobre todos os módulos |
-| Backend/API/PHP | em andamento | auth+referencias+contatos ok; demais pendentes |
-| Frontend | em andamento | módulo Contatos ok; demais pendentes |
+| Backend/API/PHP | em andamento | auth, contatos, matrículas, presença, eventos e avaliações ok; falta pagamentos/scripts/indicações |
+| Frontend | em andamento | Contatos, Turmas, Presença, Eventos e Provas ok; falta pagamentos/scripts/indicações |
 | Segurança/auditoria | em andamento | sessão, PDO, hash, logs; falta CSRF/rate-limit |
 | QA/testes | pendente | sem runtime PHP no ambiente de dev da IA |
 | Documentação | feito | docs 01,02,08,09,15 + sistema/README |
@@ -119,6 +119,7 @@ Registre decisões importantes para evitar que outra IA ou programador refaça d
 | Data | Decisão | Motivo | Impacto | Quem decidiu |
 |---|---|---|---|---|
 | 2026-07-09 | Matricular um contato numa turma promove automaticamente `tipo_contato` para `aluno` (exceto `nao_contatar`). Cancelar/excluir a última matrícula ativa/pausada rebaixa para `ex_aluno`. | Evitar que alguém já em turma continue tratado como "não aluno" no CRM/follow-up. | `api/matriculas.php` (criar/atualizar_status/excluir) passa a alterar `contatos.tipo_contato` e sincronizar os `status_*`. Sem migration. | rodrigo.arnaldo |
+| 2026-07-09 | Módulo Provas: vídeo por **upload** (não link), armazenado em `storage/videos` (fora do docroot) e servido por endpoint de streaming com Range. Média = média simples das notas 0-10 preenchidas, calculada no backend. | Escola grava as provas; precisa reproduzir e dar seek no player. Fora do docroot por segurança. | Novo `api/avaliacoes.php` + tela; exige volume persistente montado em `storage/videos`. Sem migration (tabela `avaliacoes` já existia). | rodrigo.arnaldo |
 
 Exemplos de decisões:
 
@@ -303,11 +304,18 @@ Use esta seção para outra IA ou programador continuar exatamente de onde parou
 
 ```txt
 Última coisa feita:
-Regra de negócio nova em api/matriculas.php: ao criar/reativar matrícula o contato
-é promovido a tipo_contato='aluno' (exceto 'nao_contatar'), com status_aluno='novo'
-e limpeza dos status_* de outros tipos; ao cancelar/excluir a última matrícula
-ativa/pausada o contato volta a 'ex_aluno'. Funções promoverParaAluno() e
-reverterSeSemTurma(). Sem migration (enums já cobrem). Falta commit + deploy.
+Módulo PROVAS (avaliações práticas) entregue end-to-end: api/avaliacoes.php (CRUD,
+média das 6 notas calculada no backend, upload de vídeo em storage/videos com
+streaming por Range no acao=video, exclusão remove o arquivo) + tela (menu "Provas",
+view + modal em index.html, lógica em app.js: lista, form com busca de aluno, notas
+0-10, média ao vivo, feedback/próximos passos, player e upload). Sem migration
+(tabela avaliacoes já está no schema em produção).
+
+Antes disso: Regra de negócio em api/matriculas.php: ao criar/reativar matrícula o
+contato é promovido a tipo_contato='aluno' (exceto 'nao_contatar'), com
+status_aluno='novo' e limpeza dos status_* de outros tipos; ao cancelar/excluir a
+última matrícula ativa/pausada volta a 'ex_aluno'. JÁ COMMITADO E PUSHADO (c1d5ca6);
+falta o Deploy manual no EasyPanel + rodar o SQL de promoção retroativa.
 
 Antes disso: Deploy em PRODUÇÃO no EasyPanel concluído: serviços MySQL (roh-e-sih-db)
 e App (roh-e-sih-app) criados, DB_HOST corrigido para o host interno
@@ -317,9 +325,12 @@ Repo: github.com/rodrigoarnaldo/roh-e-sih (push via SSH deste ambiente).
 
 Estado atual:
 Sistema NO AR. Funcionando: login/instalação, Contatos (CRM), importação CSV,
-Matrícula (Turmas), Presença (chamada + frequência) e Eventos (inscrições +
-follow-up). Módulos ainda SEM API/tela (schema pronto): pagamentos, scripts de
-mensagem, indicações, avaliações.
+Matrícula (Turmas), Presença (chamada + frequência), Eventos (inscrições +
+follow-up) e Provas/Avaliações (notas + vídeo). Módulos ainda SEM API/tela
+(schema pronto): pagamentos, scripts de mensagem, indicações.
+IMPORTANTE: upload de vídeo depende do volume persistente em
+/var/www/html/storage/videos (já criado no Dockerfile) — garantir que o volume
+esteja montado no EasyPanel para os vídeos não se perderem em novo deploy.
 
 ATENÇÃO: o módulo Eventos exige rodar a migration
 database/migrations/001_eventos_inscricoes_status.sql no banco de produção

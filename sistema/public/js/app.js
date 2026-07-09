@@ -50,8 +50,10 @@ function ligarEventosGlobais() {
   $$('[data-fechar-turma]').forEach(b => b.addEventListener('click', () => $('#modal-turma').classList.add('oculto')));
   $$('[data-fechar-evento]').forEach(b => b.addEventListener('click', () => $('#modal-evento').classList.add('oculto')));
   $$('[data-fechar-insc]').forEach(b => b.addEventListener('click', () => $('#modal-inscricoes').classList.add('oculto')));
+  $$('[data-fechar-aval]').forEach(b => b.addEventListener('click', () => $('#modal-avaliacao').classList.add('oculto')));
   $('#form-contato').addEventListener('submit', aoSalvarContato);
   $('#form-evento').addEventListener('submit', aoSalvarEvento);
+  $('#form-avaliacao').addEventListener('submit', aoSalvarAvaliacao);
 }
 
 // ---------- Auth ----------
@@ -100,6 +102,7 @@ function trocarView(view) {
   if (view === 'importar')  renderImportar();
   if (view === 'turmas')    renderTurmas();
   if (view === 'presenca')  renderPresenca();
+  if (view === 'provas')    renderProvas();
   if (view === 'eventos')   renderEventos();
   if (view === 'followup')  renderFollowup();
 }
@@ -897,4 +900,236 @@ async function executarImportacao() {
     ${tiposHtml ? `<p class="ajuda" style="margin-top:10px">Por tipo: ${tiposHtml}</p>` : ''}
     ${errosHtml}`;
   toast(r.message);
+}
+
+// ================= PROVAS / AVALIAÇÕES =================
+const CRITERIOS_PROVA = [
+  { campo: 'nota_corpo',       rotulo: 'Corpo' },
+  { campo: 'nota_musica',      rotulo: 'Música' },
+  { campo: 'nota_espaco',      rotulo: 'Espaço' },
+  { campo: 'nota_comunicacao', rotulo: 'Comunicação' },
+  { campo: 'nota_artistico',   rotulo: 'Artístico' },
+  { campo: 'nota_repertorio',  rotulo: 'Repertório' },
+];
+let avalContatoSel = null;   // aluno selecionado no formulário
+let provaBuscaQ = '';        // filtro da lista
+
+const fmtData = (s) => (s ? String(s).slice(0, 10).split('-').reverse().join('/') : '—');
+function notaClasse(m) {
+  m = Number(m);
+  if (m >= 8) return 'tp-aluno';
+  if (m >= 6) return 'tp-ex_aluno';
+  return 'tp-nao_contatar';
+}
+
+async function renderProvas() {
+  const alvo = $('#view-provas');
+  alvo.innerHTML = `
+    <div class="view-topo">
+      <h2>Provas (avaliações)</h2>
+      <button class="btn btn-primario" id="btn-nova-prova">+ Nova prova</button>
+    </div>
+    <div class="barra-filtros">
+      <input type="search" id="prova-q" placeholder="Buscar por aluno…" value="${esc(provaBuscaQ)}">
+    </div>
+    <div class="tabela-wrap" id="tabela-provas"></div>`;
+  $('#btn-nova-prova').addEventListener('click', () => abrirModalAvaliacao(null));
+  $('#prova-q').addEventListener('input', debounce(() => { provaBuscaQ = $('#prova-q').value; carregarProvas(); }, 350));
+  carregarProvas();
+}
+
+async function carregarProvas() {
+  const wrap = $('#tabela-provas');
+  wrap.innerHTML = '<p class="vazio">Carregando…</p>';
+  const params = new URLSearchParams({ acao: 'listar' });
+  if (provaBuscaQ) params.set('q', provaBuscaQ);
+  const r = await API.get('avaliacoes.php?' + params.toString());
+  if (!r.success) { wrap.innerHTML = '<p class="vazio">Erro ao carregar.</p>'; return; }
+  if (!r.data.length) { wrap.innerHTML = '<p class="vazio">Nenhuma prova registrada ainda. Clique em “+ Nova prova”.</p>'; return; }
+  wrap.innerHTML = `<table>
+    <thead><tr><th>Aluno</th><th>Data</th><th>Média</th><th>Vídeo</th><th></th></tr></thead>
+    <tbody>${r.data.map(a => `
+      <tr>
+        <td>${esc(a.nome)} ${esc(a.sobrenome || '')}</td>
+        <td>${fmtData(a.data_avaliacao)}</td>
+        <td>${a.nota_media != null ? `<span class="badge ${notaClasse(a.nota_media)}">${Number(a.nota_media).toFixed(2)}</span>` : '—'}</td>
+        <td>${a.tem_video == 1 ? `<a href="../api/avaliacoes.php?acao=video&id=${a.id}" target="_blank" rel="noopener">▶ ver</a>` : '—'}</td>
+        <td class="acoes-linha">
+          <button class="btn" data-edit-prova="${a.id}">Abrir</button>
+          <button class="btn btn-perigo" data-del-prova="${a.id}" data-nome="${esc(a.nome)}">Excluir</button>
+        </td>
+      </tr>`).join('')}</tbody></table>`;
+  $$('[data-edit-prova]', wrap).forEach(b => b.addEventListener('click', () => abrirModalAvaliacao(+b.dataset.editProva)));
+  $$('[data-del-prova]', wrap).forEach(b => b.addEventListener('click', () => excluirAvaliacao(+b.dataset.delProva, b.dataset.nome)));
+}
+
+function montarFormAvaliacao() {
+  const notas = CRITERIOS_PROVA.map(c => `
+    <label>${c.rotulo}
+      <input name="${c.campo}" type="number" min="0" max="10" step="0.5" inputmode="decimal" placeholder="0–10">
+    </label>`).join('');
+  return `
+    <fieldset><legend>Aluno &amp; data</legend>
+      <div class="full">
+        <div id="aval-aluno-sel" class="ajuda">Nenhum aluno selecionado.</div>
+        <input type="search" id="aval-busca" placeholder="Buscar aluno pelo nome ou WhatsApp…">
+        <div id="aval-busca-res"></div>
+      </div>
+      <label>Data da prova<input name="data_avaliacao" type="date" value="${new Date().toISOString().slice(0, 10)}"></label>
+    </fieldset>
+
+    <fieldset><legend>Notas (0 a 10)</legend>
+      ${notas}
+      <label>Média (automática)<input id="aval-media" type="text" readonly value="—"></label>
+    </fieldset>
+
+    <fieldset><legend>Devolutiva</legend>
+      <label class="full">Feedback<textarea name="feedback" rows="3"></textarea></label>
+      <label class="full">Próximos passos<textarea name="proximos_passos" rows="2"></textarea></label>
+    </fieldset>
+
+    <fieldset><legend>Vídeo da prova</legend>
+      <div class="full" id="aval-video-atual"></div>
+      <label class="full">Enviar vídeo (mp4, mov, webm… até 200 MB)
+        <input id="aval-video" name="video" type="file" accept="video/*">
+      </label>
+    </fieldset>`;
+}
+
+async function abrirModalAvaliacao(id) {
+  const form = $('#form-avaliacao');
+  $('#form-aval-msg').textContent = '';
+  $('#modal-aval-titulo').textContent = id ? 'Editar prova' : 'Nova prova';
+  form.dataset.id = id || '';
+  avalContatoSel = null;
+  form.innerHTML = montarFormAvaliacao();
+  ligarFormAvaliacao();
+
+  if (id) {
+    const r = await API.get('avaliacoes.php?acao=obter&id=' + id);
+    if (r.success) {
+      const d = r.data;
+      form.querySelectorAll('input,textarea').forEach(el => {
+        if (el.type === 'file' || el.readOnly) return;
+        if (d[el.name] != null) el.value = d[el.name];
+      });
+      selecionarAlunoProva({ id: d.contato_id, nome: d.nome, sobrenome: d.sobrenome });
+      recalcularMedia();
+      renderVideoAtual(id, d.video_arquivo);
+    }
+  } else {
+    renderVideoAtual(null, null);
+  }
+  $('#modal-avaliacao').classList.remove('oculto');
+}
+
+function ligarFormAvaliacao() {
+  const busca = $('#aval-busca');
+  busca.oninput = debounce(async () => {
+    const q = busca.value.trim();
+    const res = $('#aval-busca-res');
+    if (q.length < 2) { res.innerHTML = ''; return; }
+    const r = await API.get('avaliacoes.php?acao=buscar_contatos&q=' + encodeURIComponent(q));
+    if (!r.success) return;
+    res.innerHTML = r.data.length
+      ? r.data.map((c, i) => `
+          <div class="linha-busca">
+            <span>${esc(c.nome)} ${esc(c.sobrenome || '')} · ${esc(c.whatsapp)} <span class="badge tp-${c.tipo_contato}">${rotulo('tipo_contato', c.tipo_contato)}</span></span>
+            <button type="button" class="btn btn-primario" data-pick="${i}">Selecionar</button>
+          </div>`).join('')
+      : '<p class="ajuda">Nenhum contato encontrado.</p>';
+    $$('#aval-busca-res [data-pick]').forEach(b => b.addEventListener('click', () => selecionarAlunoProva(r.data[+b.dataset.pick])));
+  }, 350);
+  $$('#form-avaliacao input[type=number]').forEach(inp => inp.addEventListener('input', recalcularMedia));
+}
+
+function selecionarAlunoProva(c) {
+  avalContatoSel = c;
+  $('#aval-aluno-sel').innerHTML = `<strong>Aluno:</strong> ${esc(c.nome)} ${esc(c.sobrenome || '')}`;
+  $('#aval-busca').value = '';
+  $('#aval-busca-res').innerHTML = '';
+}
+
+function recalcularMedia() {
+  const vals = CRITERIOS_PROVA.map(c => {
+    const el = $(`#form-avaliacao [name="${c.campo}"]`);
+    if (!el || el.value === '') return null;
+    const v = parseFloat(String(el.value).replace(',', '.'));
+    return isNaN(v) ? null : v;
+  }).filter(v => v != null);
+  const media = vals.length ? vals.reduce((a, b) => a + b, 0) / vals.length : null;
+  $('#aval-media').value = media != null ? media.toFixed(2) : '—';
+}
+
+function renderVideoAtual(id, arquivo) {
+  const alvo = $('#aval-video-atual');
+  if (!alvo) return;
+  alvo.innerHTML = arquivo
+    ? `<video controls preload="metadata" style="width:100%;max-height:320px;border-radius:8px;background:#000" src="../api/avaliacoes.php?acao=video&id=${id}"></video>
+       <p class="ajuda">Enviar um novo arquivo abaixo substitui este vídeo.</p>`
+    : '<p class="ajuda">Nenhum vídeo enviado ainda.</p>';
+}
+
+async function uploadVideoProva(id, file) {
+  const fd = new FormData();
+  fd.append('video', file);
+  try {
+    const resp = await fetch(`../api/avaliacoes.php?acao=upload_video&id=${id}`, {
+      method: 'POST', body: fd, credentials: 'same-origin', headers: { 'Accept': 'application/json' },
+    });
+    return await resp.json();
+  } catch (e) {
+    return { success: false, message: 'Falha ao enviar o vídeo.' };
+  }
+}
+
+async function aoSalvarAvaliacao(e) {
+  e.preventDefault();
+  const form = e.target;
+  const msg = $('#form-aval-msg');
+  if (!avalContatoSel) { msg.className = 'msg erro'; msg.textContent = 'Selecione o aluno avaliado.'; return; }
+
+  const dados = { contato_id: avalContatoSel.id };
+  form.querySelectorAll('input,textarea').forEach(el => {
+    if (el.type === 'file' || el.readOnly || !el.name) return;
+    dados[el.name] = el.value;
+  });
+
+  const submitBtn = $('#modal-avaliacao button[type=submit]');
+  if (submitBtn) submitBtn.disabled = true;
+
+  const id = form.dataset.id;
+  const url = id ? ('avaliacoes.php?acao=atualizar&id=' + id) : 'avaliacoes.php?acao=criar';
+  const r = await API.post(url, dados);
+  if (!r.success) {
+    if (submitBtn) submitBtn.disabled = false;
+    msg.className = 'msg erro';
+    msg.textContent = (r.errors[0] && r.errors[0].message) || r.message;
+    return;
+  }
+
+  // Envia o vídeo (se houver) depois de salvar, usando o id retornado.
+  const fileInput = $('#aval-video');
+  if (fileInput && fileInput.files && fileInput.files[0]) {
+    msg.className = 'msg'; msg.textContent = 'Enviando vídeo…';
+    const up = await uploadVideoProva(r.data.id, fileInput.files[0]);
+    if (!up.success) {
+      if (submitBtn) submitBtn.disabled = false;
+      msg.className = 'msg erro';
+      msg.textContent = (up.errors && up.errors[0] && up.errors[0].message) || up.message || 'Erro ao enviar o vídeo.';
+      return;
+    }
+  }
+
+  if (submitBtn) submitBtn.disabled = false;
+  $('#modal-avaliacao').classList.add('oculto');
+  toast(r.message);
+  carregarProvas();
+}
+
+async function excluirAvaliacao(id, nome) {
+  if (!confirm(`Excluir a prova de "${nome}"? O vídeo também será removido.`)) return;
+  const r = await API.post('avaliacoes.php?acao=excluir&id=' + id, {});
+  if (r.success) { toast('Prova removida.'); carregarProvas(); }
+  else { toast(r.message || 'Erro ao excluir.', 'erro'); }
 }

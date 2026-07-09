@@ -44,6 +44,7 @@
         <a href="#" class="nav-item" data-view="importar">📥 Importar</a>
         <a href="#" class="nav-item" data-view="turmas">🗓️ Turmas</a>
         <a href="#" class="nav-item" data-view="presenca">✅ Presença</a>
+        <a href="#" class="nav-item" data-view="provas">🎬 Provas</a>
         <a href="#" class="nav-item" data-view="eventos">🎉 Eventos</a>
         <a href="#" class="nav-item" data-view="followup">🔔 Follow-up</a>
       </nav>
@@ -59,6 +60,7 @@
       <div id="view-importar" class="view oculto"></div>
       <div id="view-turmas" class="view oculto"></div>
       <div id="view-presenca" class="view oculto"></div>
+      <div id="view-provas" class="view oculto"></div>
       <div id="view-eventos" class="view oculto"></div>
       <div id="view-followup" class="view oculto"></div>
     </main>
@@ -140,6 +142,24 @@
       <footer class="modal-rodape">
         <p class="ajuda" style="margin:0">Negociando/Reservado aparecem no Follow-up.</p>
         <button type="button" class="btn" data-fechar-insc>Fechar</button>
+      </footer>
+    </div>
+  </div>
+
+  <!-- ===================== MODAL PROVA (avaliação) ===================== -->
+  <div id="modal-avaliacao" class="modal oculto">
+    <div class="modal-caixa">
+      <header class="modal-topo">
+        <h2 id="modal-aval-titulo">Nova prova</h2>
+        <button class="btn-fechar" data-fechar-aval>&times;</button>
+      </header>
+      <form id="form-avaliacao" class="form-contato"></form>
+      <footer class="modal-rodape">
+        <p id="form-aval-msg" class="msg"></p>
+        <div>
+          <button type="button" class="btn" data-fechar-aval>Cancelar</button>
+          <button type="submit" form="form-avaliacao" class="btn btn-primario">Salvar</button>
+        </div>
       </footer>
     </div>
   </div>
