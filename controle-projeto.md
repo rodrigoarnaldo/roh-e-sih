@@ -15,7 +15,7 @@ Nome do projeto: Roh & Sih — CRM & Secretaria
 Cliente/empresa: Escola de Dança de Salão Roh & Sih
 Responsável: rodrigo.arnaldo@gmail.com
 Data de início: 2026-07-08
-Última atualização: 2026-07-08
+Última atualização: 2026-07-09
 Status geral: em desenvolvimento (fatia 1 entregue)
 ```
 
@@ -118,7 +118,7 @@ Registre decisões importantes para evitar que outra IA ou programador refaça d
 
 | Data | Decisão | Motivo | Impacto | Quem decidiu |
 |---|---|---|---|---|
-|  |  |  |  |  |
+| 2026-07-09 | Matricular um contato numa turma promove automaticamente `tipo_contato` para `aluno` (exceto `nao_contatar`). Cancelar/excluir a última matrícula ativa/pausada rebaixa para `ex_aluno`. | Evitar que alguém já em turma continue tratado como "não aluno" no CRM/follow-up. | `api/matriculas.php` (criar/atualizar_status/excluir) passa a alterar `contatos.tipo_contato` e sincronizar os `status_*`. Sem migration. | rodrigo.arnaldo |
 
 Exemplos de decisões:
 
@@ -303,8 +303,14 @@ Use esta seção para outra IA ou programador continuar exatamente de onde parou
 
 ```txt
 Última coisa feita:
-Deploy em PRODUÇÃO no EasyPanel concluído: serviços MySQL (roh-e-sih-db) e App
-(roh-e-sih-app) criados, DB_HOST corrigido para o host interno
+Regra de negócio nova em api/matriculas.php: ao criar/reativar matrícula o contato
+é promovido a tipo_contato='aluno' (exceto 'nao_contatar'), com status_aluno='novo'
+e limpeza dos status_* de outros tipos; ao cancelar/excluir a última matrícula
+ativa/pausada o contato volta a 'ex_aluno'. Funções promoverParaAluno() e
+reverterSeSemTurma(). Sem migration (enums já cobrem). Falta commit + deploy.
+
+Antes disso: Deploy em PRODUÇÃO no EasyPanel concluído: serviços MySQL (roh-e-sih-db)
+e App (roh-e-sih-app) criados, DB_HOST corrigido para o host interno
 "roh-e-sih_roh-e-sih-db", schema+seed importados e health.php respondendo
 banco: ok. Também entregue a importação de não alunos por CSV (tela + endpoint).
 Repo: github.com/rodrigoarnaldo/roh-e-sih (push via SSH deste ambiente).

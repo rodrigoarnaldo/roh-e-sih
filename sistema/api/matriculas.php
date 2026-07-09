@@ -113,6 +113,12 @@ function criar() {
     }
     $id = (int) db()->lastInsertId();
     registrar_log('criar', 'matricula', $id, ['contato_id' => $contatoId, 'turma_id' => $turmaId]);
+
+    // Regra de negócio: entrar numa turma promove o contato a "aluno"
+    // (exceto quem é "nao_contatar"). Só quando a matrícula fica de fato em vigor.
+    if (in_array($status, ['ativa', 'pausada'], true)) {
+        promoverParaAluno($contatoId);
+    }
     sucesso(['id' => $id], 'Matrícula criada.');
 }
 
@@ -124,12 +130,22 @@ function atualizarStatus() {
 
     $stmt = db()->prepare('UPDATE matriculas SET status = :s WHERE id = :id');
     $stmt->execute([':s' => $status, ':id' => $id]);
-    if ($stmt->rowCount() === 0) {
-        $chk = db()->prepare('SELECT id FROM matriculas WHERE id = :id');
-        $chk->execute([':id' => $id]);
-        if (!$chk->fetch()) { erro('Matrícula não encontrada.', [], 404); }
-    }
+
+    // Recupera o contato (também serve de verificação de existência).
+    $chk = db()->prepare('SELECT contato_id FROM matriculas WHERE id = :id');
+    $chk->execute([':id' => $id]);
+    $row = $chk->fetch();
+    if (!$row) { erro('Matrícula não encontrada.', [], 404); }
+    $contatoId = (int) $row['contato_id'];
+
     registrar_log('atualizar', 'matricula', $id, ['status' => $status]);
+
+    // Reativar promove a aluno; cancelar pode rebaixar a ex_aluno se não sobrar turma.
+    if (in_array($status, ['ativa', 'pausada'], true)) {
+        promoverParaAluno($contatoId);
+    } else {
+        reverterSeSemTurma($contatoId);
+    }
     sucesso(null, 'Status atualizado.');
 }
 
@@ -137,9 +153,66 @@ function excluir() {
     if (metodo() !== 'POST') { erro('Método não permitido.', [], 405); }
     $id = (int) query('id');
     if ($id <= 0) { erro('ID inválido.', [], 400); }
-    $stmt = db()->prepare('DELETE FROM matriculas WHERE id = :id');
-    $stmt->execute([':id' => $id]);
-    if ($stmt->rowCount() === 0) { erro('Matrícula não encontrada.', [], 404); }
+
+    // Guarda o contato ANTES de apagar (depois a linha some).
+    $chk = db()->prepare('SELECT contato_id FROM matriculas WHERE id = :id');
+    $chk->execute([':id' => $id]);
+    $row = $chk->fetch();
+    if (!$row) { erro('Matrícula não encontrada.', [], 404); }
+    $contatoId = (int) $row['contato_id'];
+
+    db()->prepare('DELETE FROM matriculas WHERE id = :id')->execute([':id' => $id]);
     registrar_log('excluir', 'matricula', $id);
+
+    // Sem nenhuma turma ativa, o aluno volta a ex_aluno.
+    reverterSeSemTurma($contatoId);
     sucesso(null, 'Matrícula removida.');
+}
+
+// ============================================================
+// Sincronização automática do tipo do contato conforme matrícula
+// ============================================================
+
+// Entrar numa turma promove o contato a "aluno".
+// Escopo: qualquer tipo, EXCETO "nao_contatar" (e quem já é "aluno").
+// Mantém a invariante do sistema: só o status do tipo atual fica preenchido.
+function promoverParaAluno(int $contatoId): void {
+    $stmt = db()->prepare(
+        "UPDATE contatos
+            SET tipo_contato        = 'aluno',
+                status_aluno        = COALESCE(status_aluno, 'novo'),
+                status_nao_aluno    = NULL,
+                status_ex_aluno     = NULL,
+                status_nao_contatar = NULL
+          WHERE id = :c
+            AND tipo_contato NOT IN ('aluno', 'nao_contatar')"
+    );
+    $stmt->execute([':c' => $contatoId]);
+    if ($stmt->rowCount() > 0) {
+        registrar_log('promover_aluno', 'contato', $contatoId, ['origem' => 'matricula']);
+    }
+}
+
+// Cancelar/excluir matrícula rebaixa a "ex_aluno" quando o contato é "aluno"
+// e não sobra nenhuma matrícula ativa ou pausada.
+function reverterSeSemTurma(int $contatoId): void {
+    $stmt = db()->prepare(
+        "UPDATE contatos
+            SET tipo_contato        = 'ex_aluno',
+                status_aluno        = NULL,
+                plano               = NULL,
+                status_nao_aluno    = NULL,
+                status_nao_contatar = NULL
+          WHERE id = :c
+            AND tipo_contato = 'aluno'
+            AND NOT EXISTS (
+                SELECT 1 FROM matriculas m
+                 WHERE m.contato_id = :c2
+                   AND m.status IN ('ativa', 'pausada')
+            )"
+    );
+    $stmt->execute([':c' => $contatoId, ':c2' => $contatoId]);
+    if ($stmt->rowCount() > 0) {
+        registrar_log('reverter_ex_aluno', 'contato', $contatoId, ['origem' => 'matricula']);
+    }
 }
